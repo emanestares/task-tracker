@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────
+# Build / Compiled Output
+# ─────────────────────────────────────────────────────────────
+dist/
+coverage/
+tmp/
+out/
+
+# ─────────────────────────────────────────────────────────────
+# Java / Gradle / Spring Boot
+# ─────────────────────────────────────────────────────────────
+.gradle/
+**/build/
+
+!gradle/wrapper/gradle-wrapper.jar
+
+*.class
+*.jar
+*.war
+
+logs/
+
+# Spring Boot config / secrets
+**/application.properties
+
+# ─────────────────────────────────────────────────────────────
+# React / Node.js
+# ─────────────────────────────────────────────────────────────
+**/node_modules/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+**/.env
+**/.env.*
+
+# TypeScript
+*.tsbuildinfo
+
+# ─────────────────────────────────────────────────────────────
+# IDEs / Editors
+# ─────────────────────────────────────────────────────────────
+
+## IntelliJ IDEA
+.idea/
+*.iml
+
+## Eclipse / STS
+.project
+.classpath
+.factorypath
+.settings/
+.springBeans
+.sts4-cache/
+
+## VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ─────────────────────────────────────────────────────────────
+# Misc
+# ─────────────────────────────────────────────────────────────
+.history/
+.sass-cache/
+__screenshots__/
+
+# ─────────────────────────────────────────────────────────────
+# System Files
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
