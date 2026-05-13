@@ -7,18 +7,20 @@ import lombok.Data;
 public class RegisterRequest {
 
     @NotBlank
-    @Size(min = 3, max = 50)
+    @Size(min = 3, max = 50, message = "Username must be between 3-50 characters")
     private String username;
 
     @NotBlank
+    @Size(min = 2, max = 100, message = "Name must be between 2-100 characters")
+    private String name;
+
+    @NotBlank
     @Email
+    @Size(min = 2, max = 100, message = "Email must be between 3-100 characters")
     private String email;
 
     @NotBlank
-    @Size(min = 6, max = 100)
+    @Size(min = 6, max = 100, message = "Password must be between 6-100 characters")
     private String password;
 
-    @NotBlank
-    @Size(min = 1, max = 100)
-    private String name;
 }
