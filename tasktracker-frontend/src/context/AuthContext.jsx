@@ -79,19 +79,36 @@ export function AuthProvider({ children }) {
     setLoading(true)
     try {
       const data = await AuthService.editProfile(payload)
+
       const updated = { ...user, ...data }
       localStorage.setItem(USER_KEY, JSON.stringify(updated))
       setUser(updated)
+
       if (data.token) {
         localStorage.setItem(TOKEN_KEY, data.token)
         setToken(data.token)
       }
+
       toast.success('Profile updated successfully!')
-    } catch (err) {
-      const msg = err.response?.data?.message || 'Failed to update profile.'
-      toast.error(msg)
-      throw err
-    } finally {
+      return data
+    }  catch (err) {
+        const data = err.response?.data
+
+        const msg =
+          data?.message ||
+          Object.values(data?.fields || {})[0] ||
+          'Failed to update profile.'
+
+        const fields = data?.fields
+
+        toast.error(msg)
+
+        const enhancedError = new Error(msg)
+        enhancedError.fields = fields
+        enhancedError.response = err.response
+
+        throw enhancedError
+      } finally {
       setLoading(false)
     }
   }, [user])

@@ -38,8 +38,14 @@ export default function ProfilePage() {
   const validateProfile = () => {
     const errs = {}
     if (!profileForm.name.trim()) errs.name = 'Name is required.'
-    if (!profileForm.email.trim()) errs.email = 'Email is required.'
-    if (!/\S+@\S+\.\S+/.test(profileForm.email)) errs.email = 'Enter a valid email.'
+    if (!profileForm.username.trim()) {
+        errs.username = 'Username is required.'
+      }
+    if (!profileForm.email.trim()) {
+      errs.email = 'Email is required.'
+    } else if (!/\S+@\S+\.\S+/.test(profileForm.email)) {
+      errs.email = 'Enter a valid email.'
+    }
     return errs
   }
 
@@ -54,19 +60,50 @@ export default function ProfilePage() {
 
   const handleProfileSave = async (e) => {
     e.preventDefault()
+
     const errs = validateProfile()
-    if (Object.keys(errs).length) { setProfileErrors(errs); return }
-    try { await updateProfile(profileForm) } catch { /* handled */ }
+    if (Object.keys(errs).length) {
+      setProfileErrors(errs)
+      return
+    }
+
+    try {
+      await updateProfile(profileForm)
+      setProfileErrors({})
+    } catch (err) {
+      if (err.fields) {
+        setProfileErrors(err.fields)
+      }
+    }
   }
 
   const handlePwdSave = async (e) => {
     e.preventDefault()
+
     const errs = validatePwd()
-    if (Object.keys(errs).length) { setPwdErrors(errs); return }
+    if (Object.keys(errs).length) {
+      setPwdErrors(errs)
+      return
+    }
+
     try {
-      await updateProfile({ password: pwdForm.newPassword, currentPassword: pwdForm.currentPassword })
-      setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
-    } catch { /* handled */ }
+      await updateProfile({
+        password: pwdForm.newPassword,
+        currentPassword: pwdForm.currentPassword
+      })
+
+      setPwdForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+
+      setPwdErrors({})
+    } catch (err) {
+      if (err.fields) {
+        setPwdErrors(err.fields)
+      }
+    }
   }
 
   const initials = getInitials(user?.name || user?.username || 'U')
@@ -113,8 +150,17 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Username</label>
-              <input type="text" className="input-field"
-                value={profileForm.username} onChange={(e) => setP('username', e.target.value)} />
+              <input
+                type="text"
+                className={`input-field ${profileErrors.username ? 'error' : ''}`}
+                value={profileForm.username}
+                onChange={(e) => setP('username', e.target.value)}
+              />
+              {profileErrors.username && (
+                <p className="text-xs text-red-500 mt-1">
+                  {profileErrors.username}
+                </p>
+              )}
             </div>
             <div>
               <label className="label">Email</label>
