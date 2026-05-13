@@ -4,6 +4,7 @@ import com.tasktracker.dto.TaskRequest;
 import com.tasktracker.dto.TaskResponse;
 import com.tasktracker.service.TaskService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -13,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -36,7 +38,7 @@ class TaskControllerTest {
                 .andExpect(status().isOk());
     }
 
-    // TC_004
+    // TC_004 — all fields including new ones
     @Test
     @WithMockUser(username = "testuser")
     void POST_createTask_validData_returns201() throws Exception {
@@ -44,16 +46,31 @@ class TaskControllerTest {
         req.setTitle("Buy groceries");
         req.setDescription("Milk and eggs");
         req.setCompleted(false);
+        req.setStatus("TODO");
+        req.setPriority("MEDIUM");
+        req.setDueDate(LocalDate.of(2025, 12, 31));
 
         TaskResponse resp = TaskResponse.builder()
-                .id(1L).title("Buy groceries").completed(false).build();
+                .id(1L)
+                .title("Buy groceries")
+                .completed(false)
+                .status("TODO")
+                .priority("MEDIUM")
+                .dueDate(LocalDate.of(2025, 12, 31))
+                .build();
+
         when(taskService.createTask(any(), any())).thenReturn(resp);
+
+        // Register JavaTimeModule so ObjectMapper handles LocalDate
+        objectMapper.registerModule(new JavaTimeModule());
 
         mockMvc.perform(post("/api/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("Buy groceries"));
+                .andExpect(jsonPath("$.title").value("Buy groceries"))
+                .andExpect(jsonPath("$.status").value("TODO"))
+                .andExpect(jsonPath("$.priority").value("MEDIUM"));
     }
 
     // TC_005 — missing title
@@ -62,6 +79,8 @@ class TaskControllerTest {
     void POST_createTask_missingTitle_returns400() throws Exception {
         TaskRequest req = new TaskRequest();
         req.setDescription("No title here");
+
+        objectMapper.registerModule(new JavaTimeModule());
 
         mockMvc.perform(post("/api/tasks")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -41,6 +41,9 @@ public class TaskService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .completed(request.getCompleted() != null ? request.getCompleted() : false)
+                .dueDate(request.getDueDate())
+                .priority(request.getPriority())
+                .status(request.getStatus() != null ? request.getStatus() : "TODO")
                 .user(user)
                 .build();
 
@@ -56,6 +59,15 @@ public class TaskService {
         task.setDescription(request.getDescription());
         if (request.getCompleted() != null) {
             task.setCompleted(request.getCompleted());
+        }
+        if (request.getDueDate() != null) {
+            task.setDueDate(request.getDueDate());
+        }
+        if (request.getPriority() != null) {
+            task.setPriority(request.getPriority());
+        }
+        if (request.getStatus() != null) {
+            task.setStatus(request.getStatus());
         }
 
         Task updated = taskRepository.save(task);
@@ -77,6 +89,9 @@ public class TaskService {
                 .userId(task.getUser().getId())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
+                .dueDate(task.getDueDate())
+                .priority(task.getPriority())
+                .status(task.getStatus())
                 .build();
     }
 }

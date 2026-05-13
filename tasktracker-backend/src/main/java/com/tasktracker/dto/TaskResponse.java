@@ -2,6 +2,7 @@ package com.tasktracker.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,4 +15,7 @@ public class TaskResponse {
     private Long userId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDate dueDate;
+    private String priority;
+    private String status;
 }

@@ -2,6 +2,7 @@ package com.tasktracker.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,6 +23,7 @@ public class Task {
     @Column(length = 500)
     private String description;
 
+    // Maps to bit(1) column — kept for backward compatibility
     @Column(nullable = false)
     private Boolean completed = false;
 
@@ -29,10 +31,23 @@ public class Task {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // DB column type is DATE — use LocalDate (not LocalDateTime)
+    @Column(name = "due_date")
+    private LocalDate dueDate;
+
+    // Nullable in DB schema
+    @Column(name = "status", length = 50)
+    private String status;
+
+    // Nullable in DB schema
+    @Column(name = "priority", length = 50)
+    private String priority;
 
     @PrePersist
     protected void onCreate() {

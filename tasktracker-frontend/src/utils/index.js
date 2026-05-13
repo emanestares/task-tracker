@@ -5,7 +5,13 @@ import { TASK_STATUS } from '../constants'
  */
 export function formatDate(dateStr) {
   if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  // Plain date strings like "2025-12-31" (from Java LocalDate) are parsed as
+  // UTC midnight by new Date(), which can shift the displayed day in negative
+  // UTC-offset timezones. Appending T00:00 forces local-time interpretation.
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr)
+    ? dateStr + 'T00:00'
+    : dateStr
+  return new Date(normalized).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
