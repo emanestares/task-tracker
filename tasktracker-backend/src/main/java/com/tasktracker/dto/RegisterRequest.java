@@ -6,6 +6,10 @@ import lombok.Data;
 @Data
 public class RegisterRequest {
 
+    @Pattern(
+            regexp = "^[a-zA-Z0-9_-]+$",
+            message = "Username must not contain spaces or special characters"
+    )
     @NotBlank
     @Size(min = 3, max = 50, message = "Username must be between 3-50 characters")
     private String username;
