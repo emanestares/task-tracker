@@ -45,6 +45,7 @@ export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
   const [sortBy, setSortBy] = useState('priority') // 'priority' | 'dueDate' | 'created'
+  const [sortReversed, setSortReversed] = useState(false)
   const [page, setPage] = useState(1)
   const [view, setView] = useState('list') // 'list' | 'calendar'
 
@@ -63,26 +64,29 @@ export default function TasksPage() {
 
     // Sort
     result = [...result].sort((a, b) => {
+      let comparison = 0
+
       if (sortBy === 'priority') {
         const pa = PRIORITY_ORDER[a.priority] ?? 2
         const pb = PRIORITY_ORDER[b.priority] ?? 2
-        return pa !== pb ? pa - pb : 0
+        comparison = pa !== pb ? pa - pb : 0
       }
-      if (sortBy === 'dueDate') {
-        if (!a.dueDate) return 1
-        if (!b.dueDate) return -1
-        return new Date(a.dueDate) - new Date(b.dueDate)
+      else if (sortBy === 'dueDate') {
+        if (!a.dueDate) comparison = 1
+        else if (!b.dueDate) comparison = -1
+        else comparison = new Date(a.dueDate) - new Date(b.dueDate)
       }
-      if (sortBy === 'created') {
+      else if (sortBy === 'created') {
         const da = new Date(a.createdAt || a.created_at || 0)
         const db = new Date(b.createdAt || b.created_at || 0)
-        return db - da
+        comparison = db - da
       }
-      return 0
+
+      return sortReversed ? -comparison : comparison
     })
 
     return result
-  }, [tasks, debouncedSearch, statusFilter, priorityFilter, sortBy])
+  }, [tasks, debouncedSearch, statusFilter, priorityFilter, sortBy, sortReversed])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGINATION_LIMIT))
   const paginated = filtered.slice((page - 1) * PAGINATION_LIMIT, page * PAGINATION_LIMIT)
@@ -91,6 +95,7 @@ export default function TasksPage() {
   const handleSearch = (v) => { setSearch(v); setPage(1) }
   const handleStatusFilter = (v) => { setStatusFilter(v); setPage(1) }
   const handlePriorityFilter = (v) => { setPriorityFilter(v); setPage(1) }
+  const handleSortReverse = () => { setSortReversed((current) => !current); setPage(1) }
 
   const handleCreate = async (form) => {
     setFormLoading(true)
@@ -207,16 +212,38 @@ export default function TasksPage() {
             ))}
           </select>
 
-          <select
-            className="input-field text-xs flex-1"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            style={{ minWidth: 140 }}
+          <div
+            className="flex flex-1 items-stretch overflow-hidden rounded-md"
+            style={{ minWidth: 180, border: '1px solid var(--border-primary)', backgroundColor: 'var(--bg-secondary)' }}
           >
-            <option value="priority">Sort: Priority</option>
-            <option value="dueDate">Sort: Due Date</option>
-            <option value="created">Sort: Newest</option>
-          </select>
+            <select
+              className="input-field text-xs flex-1 border-0 rounded-none bg-transparent focus:shadow-none"
+              value={sortBy}
+              onChange={(e) => { setSortBy(e.target.value); setPage(1) }}
+              style={{ minWidth: 0, boxShadow: 'none' }}
+            >
+              <option value="priority">Sort: Priority</option>
+              <option value="dueDate">Sort: Due Date</option>
+              <option value="created">Sort: Newest</option>
+            </select>
+
+            <button
+              type="button"
+              className="inline-flex items-center justify-center px-2.5 text-xs transition-colors"
+              onClick={handleSortReverse}
+              aria-pressed={sortReversed}
+              aria-label={sortReversed ? 'Reverse sort order on' : 'Reverse sort order off'}
+              title={sortReversed ? 'Reverse order on' : 'Reverse order off'}
+              style={{
+                borderLeft: '1px solid var(--border-primary)',
+                color: sortReversed ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-secondary)',
+                flexShrink: 0,
+              }}
+            >
+              <ArrowUpDown size={14} style={{ transform: sortReversed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 150ms ease' }} />
+            </button>
+          </div>
         </div>
       </div>
 
