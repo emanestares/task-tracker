@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import PageHeader from '../../components/common/PageHeader'
 import { getInitials } from '../../utils'
 import { Spinner } from '../../components/ui/index.jsx'
-import { User, Lock, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, User, Lock, ShieldCheck } from 'lucide-react'
 
 export default function ProfilePage() {
   const { user, updateProfile, loading } = useAuth()
@@ -20,6 +20,7 @@ export default function ProfilePage() {
   })
   const [profileErrors, setProfileErrors] = useState({})
   const [pwdErrors, setPwdErrors] = useState({})
+  const [showPwd, setShowPwd] = useState({ current: false, next: false, confirm: false })
 
   const setP = (k, v) => {
     setProfileForm((f) => ({ ...f, [k]: v }))
@@ -28,6 +29,10 @@ export default function ProfilePage() {
   const setPwd = (k, v) => {
     setPwdForm((f) => ({ ...f, [k]: v }))
     setPwdErrors((e) => ({ ...e, [k]: undefined }))
+  }
+
+  const togglePwd = (key) => {
+    setShowPwd((state) => ({ ...state, [key]: !state[key] }))
   }
 
   const validateProfile = () => {
@@ -136,24 +141,54 @@ export default function ProfilePage() {
         <form onSubmit={handlePwdSave} className="space-y-4">
           <div>
             <label className="label">Current Password</label>
-            <input type="password" className={`input-field ${pwdErrors.currentPassword ? 'error' : ''}`}
-              placeholder="••••••••" value={pwdForm.currentPassword}
-              onChange={(e) => setPwd('currentPassword', e.target.value)} />
+            <div className="relative">
+              <input type={showPwd.current ? 'text' : 'password'} className={`input-field pr-10 ${pwdErrors.currentPassword ? 'error' : ''}`}
+                placeholder="••••••••" value={pwdForm.currentPassword}
+                onChange={(e) => setPwd('currentPassword', e.target.value)} />
+              <button
+                type="button"
+                onClick={() => togglePwd('current')}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {showPwd.current ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             {pwdErrors.currentPassword && <p className="text-xs text-red-500 mt-1">{pwdErrors.currentPassword}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">New Password</label>
-              <input type="password" className={`input-field ${pwdErrors.newPassword ? 'error' : ''}`}
-                placeholder="Min 6 chars" value={pwdForm.newPassword}
-                onChange={(e) => setPwd('newPassword', e.target.value)} />
+              <div className="relative">
+                <input type={showPwd.next ? 'text' : 'password'} className={`input-field pr-10 ${pwdErrors.newPassword ? 'error' : ''}`}
+                  placeholder="Min 6 chars" value={pwdForm.newPassword}
+                  onChange={(e) => setPwd('newPassword', e.target.value)} />
+                <button
+                  type="button"
+                  onClick={() => togglePwd('next')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {showPwd.next ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {pwdErrors.newPassword && <p className="text-xs text-red-500 mt-1">{pwdErrors.newPassword}</p>}
             </div>
             <div>
               <label className="label">Confirm New Password</label>
-              <input type="password" className={`input-field ${pwdErrors.confirmPassword ? 'error' : ''}`}
-                placeholder="Repeat password" value={pwdForm.confirmPassword}
-                onChange={(e) => setPwd('confirmPassword', e.target.value)} />
+              <div className="relative">
+                <input type={showPwd.confirm ? 'text' : 'password'} className={`input-field pr-10 ${pwdErrors.confirmPassword ? 'error' : ''}`}
+                  placeholder="Repeat password" value={pwdForm.confirmPassword}
+                  onChange={(e) => setPwd('confirmPassword', e.target.value)} />
+                <button
+                  type="button"
+                  onClick={() => togglePwd('confirm')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {showPwd.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {pwdErrors.confirmPassword && <p className="text-xs text-red-500 mt-1">{pwdErrors.confirmPassword}</p>}
             </div>
           </div>

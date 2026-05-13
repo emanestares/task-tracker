@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const { register, loading } = useAuth()
   const [form, setForm] = useState({ name: '', username: '', email: '', password: '', confirmPassword: '' })
   const [showPwd, setShowPwd] = useState(false)
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false)
   const [errors, setErrors] = useState({})
 
   const set = (k, v) => {
@@ -121,14 +122,24 @@ export default function RegisterPage() {
         {/* Confirm password */}
         <div>
           <label className="label">Confirm Password</label>
-          <input
-            type="password"
-            className={`input-field ${errors.confirmPassword ? 'error' : ''}`}
-            placeholder="Repeat your password"
-            value={form.confirmPassword}
-            onChange={(e) => set('confirmPassword', e.target.value)}
-            autoComplete="new-password"
-          />
+          <div className="relative">
+            <input
+              type={showConfirmPwd ? 'text' : 'password'}
+              className={`input-field pr-10 ${errors.confirmPassword ? 'error' : ''}`}
+              placeholder="Repeat your password"
+              value={form.confirmPassword}
+              onChange={(e) => set('confirmPassword', e.target.value)}
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPwd((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
           {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword}</p>}
         </div>
 

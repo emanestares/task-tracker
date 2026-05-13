@@ -127,14 +127,65 @@ export default function TasksPage() {
       />
 
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <SearchBar value={search} onChange={handleSearch} placeholder="Search tasks…" className="flex-1" />
-        <div className="flex gap-2 flex-wrap">
+      <div
+        className="rounded-xl p-3 sm:p-4"
+        style={{
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-primary)',
+          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.04)',
+        }}
+      >
+        <div className="flex flex-col xl:flex-row xl:items-center gap-3">
+          <div className="flex flex-1 items-stretch gap-2 min-w-0">
+            {/* View toggle */}
+            <div
+              className="flex rounded-md overflow-hidden shrink-0"
+              style={{ border: '1px solid var(--border-primary)' }}
+            >
+              <button
+                className="px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor: view === 'list' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                  color: view === 'list' ? '#fff' : 'var(--text-secondary)',
+                }}
+                onClick={() => setView('list')}
+                title="List view"
+              >
+                <List size={13} />
+              </button>
+              <button
+                className="px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor: view === 'calendar' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                  color: view === 'calendar' ? '#fff' : 'var(--text-secondary)',
+                  borderLeft: '1px solid var(--border-primary)',
+                }}
+                onClick={() => setView('calendar')}
+                title="Calendar view"
+              >
+                <Calendar size={13} />
+              </button>
+            </div>
+
+            <SearchBar value={search} onChange={handleSearch} placeholder="Search tasks…" className="flex-1 min-w-0" />
+          </div>
+
+          {hasFilters && (
+            <button
+              className="btn-ghost text-xs shrink-0 xl:self-stretch"
+              onClick={() => { setSearch(''); setStatusFilter(''); setPriorityFilter(''); setPage(1) }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
+        <div className="mt-3 flex flex-col lg:flex-row gap-2 lg:items-center">
           <select
-            className="input-field text-xs"
+            className="input-field text-xs flex-1"
             value={statusFilter}
             onChange={(e) => handleStatusFilter(e.target.value)}
-            style={{ minWidth: 110 }}
+            style={{ minWidth: 140 }}
           >
             <option value="">All Status</option>
             {Object.entries(TASK_STATUS).map(([k, v]) => (
@@ -145,10 +196,10 @@ export default function TasksPage() {
           </select>
 
           <select
-            className="input-field text-xs"
+            className="input-field text-xs flex-1"
             value={priorityFilter}
             onChange={(e) => handlePriorityFilter(e.target.value)}
-            style={{ minWidth: 100 }}
+            style={{ minWidth: 140 }}
           >
             <option value="">All Priority</option>
             {Object.entries(TASK_PRIORITY).map(([k, v]) => (
@@ -156,56 +207,16 @@ export default function TasksPage() {
             ))}
           </select>
 
-          {/* Sort */}
           <select
-            className="input-field text-xs"
+            className="input-field text-xs flex-1"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            style={{ minWidth: 110 }}
+            style={{ minWidth: 140 }}
           >
             <option value="priority">Sort: Priority</option>
             <option value="dueDate">Sort: Due Date</option>
             <option value="created">Sort: Newest</option>
           </select>
-
-          {hasFilters && (
-            <button
-              className="btn-ghost text-xs"
-              onClick={() => { setSearch(''); setStatusFilter(''); setPriorityFilter(''); setPage(1) }}
-            >
-              Clear
-            </button>
-          )}
-
-          {/* View toggle */}
-          <div
-            className="flex rounded-md overflow-hidden"
-            style={{ border: '1px solid var(--border-primary)' }}
-          >
-            <button
-              className="px-3 py-1.5 text-xs font-medium transition-colors"
-              style={{
-                backgroundColor: view === 'list' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                color: view === 'list' ? '#fff' : 'var(--text-secondary)',
-              }}
-              onClick={() => setView('list')}
-              title="List view"
-            >
-              <List size={13} />
-            </button>
-            <button
-              className="px-3 py-1.5 text-xs font-medium transition-colors"
-              style={{
-                backgroundColor: view === 'calendar' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                color: view === 'calendar' ? '#fff' : 'var(--text-secondary)',
-                borderLeft: '1px solid var(--border-primary)',
-              }}
-              onClick={() => setView('calendar')}
-              title="Calendar view"
-            >
-              <Calendar size={13} />
-            </button>
-          </div>
         </div>
       </div>
 

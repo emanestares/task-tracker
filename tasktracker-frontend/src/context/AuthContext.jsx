@@ -82,6 +82,10 @@ export function AuthProvider({ children }) {
       const updated = { ...user, ...data }
       localStorage.setItem(USER_KEY, JSON.stringify(updated))
       setUser(updated)
+      if (data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token)
+        setToken(data.token)
+      }
       toast.success('Profile updated successfully!')
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to update profile.'

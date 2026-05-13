@@ -49,7 +49,7 @@ export default function LoginPage() {
           <input
             type="text"
             className={`input-field ${errors.username ? 'error' : ''}`}
-            placeholder="john@example.com"
+            placeholder="juandc"
             value={form.username}
             onChange={(e) => set('username', e.target.value)}
             autoComplete="username"

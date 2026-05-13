@@ -1,6 +1,7 @@
 package com.tasktracker.controller;
 
 import com.tasktracker.dto.LoginRequest;
+import com.tasktracker.dto.EditProfileRequest;
 import com.tasktracker.dto.RegisterRequest;
 import com.tasktracker.service.AuthService;
 import jakarta.validation.Valid;
@@ -26,5 +27,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/edit")
+    public ResponseEntity<Map<String, Object>> edit(@RequestBody EditProfileRequest request) {
+        return ResponseEntity.ok(authService.editProfile(request));
     }
 }
