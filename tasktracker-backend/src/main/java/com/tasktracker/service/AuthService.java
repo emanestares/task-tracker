@@ -4,6 +4,7 @@ import com.tasktracker.dto.LoginRequest;
 import com.tasktracker.dto.EditProfileRequest;
 import com.tasktracker.dto.RegisterRequest;
 import com.tasktracker.entity.User;
+import com.tasktracker.exception.FieldValidationException;
 import com.tasktracker.repository.UserRepository;
 import com.tasktracker.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -25,20 +27,31 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     public Map<String, String> register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername()))
-            throw new RuntimeException("Username already taken");
-        if (userRepository.existsByEmail(request.getEmail()))
-            throw new RuntimeException("Email already registered");
+
+        Map<String, String> errors = new HashMap<>();
+
+        if (userRepository.existsByUsername(request.getUsername())) {
+            errors.put("username", "Username already taken");
+        }
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            errors.put("email", "Email already registered");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new FieldValidationException(errors);
+        }
 
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-            .fullName(request.getName())
+                .fullName(request.getName())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(User.Role.USER)
                 .build();
 
         userRepository.save(user);
+
         return Map.of("message", "User registered successfully");
     }
 
