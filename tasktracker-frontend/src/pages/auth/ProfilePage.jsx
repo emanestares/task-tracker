@@ -38,27 +38,29 @@ export default function ProfilePage() {
   const validateProfile = () => {
     const errs = {}
 
-    // name (min 2 max 100)
-    if (!profileForm.name.trim()) {
+    const name = profileForm.name.trim()
+    const username = profileForm.username.trim()
+    const email = profileForm.email.trim()
+
+    // name
+    if (!name) {
       errs.name = 'Name is required.'
-    } else if (profileForm.name.length < 2 || profileForm.name.length > 100) {
-      errs.name = 'Name must be between 2-100 characters.'
     }
 
-    // username (min 3 max 50)
-    if (!profileForm.username.trim()) {
+    // username
+    if (!username) {
       errs.username = 'Username is required.'
-    } else if (profileForm.username.length < 3 || profileForm.username.length > 50) {
-      errs.username = 'Username must be between 3-50 characters.'
+    } else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      errs.username = 'Username must not contain spaces or special characters.'
+    } else if (username.length < 3 || username.length > 50) {
+      errs.username = 'Username must be 3–50 characters.'
     }
 
-    // email (not blank + email + max 100)
-    if (!profileForm.email.trim()) {
+    // email
+    if (!email) {
       errs.email = 'Email is required.'
-    } else if (!/\S+@\S+\.\S+/.test(profileForm.email)) {
+    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
       errs.email = 'Enter a valid email.'
-    } else if (profileForm.email.length > 100) {
-      errs.email = 'Email must be maximum 100 characters.'
     }
 
     return errs
@@ -66,74 +68,28 @@ export default function ProfilePage() {
 
   const validatePwd = () => {
     const errs = {}
-
-    if (!pwdForm.currentPassword) {
-      errs.currentPassword = 'Current password is required.'
-    } else if (pwdForm.currentPassword.length < 6 || pwdForm.currentPassword.length > 100) {
-      errs.currentPassword = 'Must be 6-100 characters.'
-    }
-
-    if (!pwdForm.newPassword) {
-      errs.newPassword = 'New password is required.'
-    } else if (pwdForm.newPassword.length < 6) {
-      errs.newPassword = 'Min 6 characters.'
-    } else if (pwdForm.newPassword.length > 100) {
-      errs.newPassword = 'Maximum 100 characters.'
-    }
-
-    if (pwdForm.newPassword !== pwdForm.confirmPassword) {
-      errs.confirmPassword = 'Passwords do not match.'
-    }
-
+    if (!pwdForm.currentPassword) errs.currentPassword = 'Current password is required.'
+    if (!pwdForm.newPassword) errs.newPassword = 'New password is required.'
+    if (pwdForm.newPassword.length < 6) errs.newPassword = 'Min 6 characters.'
+    if (pwdForm.newPassword !== pwdForm.confirmPassword) errs.confirmPassword = 'Passwords do not match.'
     return errs
   }
 
   const handleProfileSave = async (e) => {
     e.preventDefault()
-
     const errs = validateProfile()
-    if (Object.keys(errs).length) {
-      setProfileErrors(errs)
-      return
-    }
-
-    try {
-      await updateProfile(profileForm)
-      setProfileErrors({})
-    } catch (err) {
-      if (err.fields) {
-        setProfileErrors(err.fields)
-      }
-    }
+    if (Object.keys(errs).length) { setProfileErrors(errs); return }
+    try { await updateProfile({ ...profileForm, email: profileForm.email.trim() }) } catch { /* handled */ }
   }
 
   const handlePwdSave = async (e) => {
     e.preventDefault()
-
     const errs = validatePwd()
-    if (Object.keys(errs).length) {
-      setPwdErrors(errs)
-      return
-    }
-
+    if (Object.keys(errs).length) { setPwdErrors(errs); return }
     try {
-      await updateProfile({
-        password: pwdForm.newPassword,
-        currentPassword: pwdForm.currentPassword
-      })
-
-      setPwdForm({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      })
-
-      setPwdErrors({})
-    } catch (err) {
-      if (err.fields) {
-        setPwdErrors(err.fields)
-      }
-    }
+      await updateProfile({ password: pwdForm.newPassword, currentPassword: pwdForm.currentPassword })
+      setPwdForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch { /* handled */ }
   }
 
   const initials = getInitials(user?.name || user?.username || 'U')
@@ -170,7 +126,7 @@ export default function ProfilePage() {
           <User size={16} style={{ color: 'var(--accent-primary)' }} />
           <h2 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>Personal Information</h2>
         </div>
-        <form onSubmit={handleProfileSave} className="space-y-4">
+        <form onSubmit={handleProfileSave} className="space-y-4" noValidate>
           <div>
             <label className="label">Full Name</label>
             <input type="text" className={`input-field ${profileErrors.name ? 'error' : ''}`}
@@ -181,16 +137,16 @@ export default function ProfilePage() {
             <div>
               <label className="label">Username</label>
               <input
-                type="text"
-                className={`input-field ${profileErrors.username ? 'error' : ''}`}
-                value={profileForm.username}
-                onChange={(e) => setP('username', e.target.value)}
-              />
-              {profileErrors.username && (
-                <p className="text-xs text-red-500 mt-1">
-                  {profileErrors.username}
-                </p>
-              )}
+              type="text"
+              className={`input-field ${profileErrors.username ? 'error' : ''}`}
+              value={profileForm.username}
+              onChange={(e) => setP('username', e.target.value)}
+            />
+            {profileErrors.username && (
+              <p className="text-xs text-red-500 mt-1">
+                {profileErrors.username}
+              </p>
+            )}
             </div>
             <div>
               <label className="label">Email</label>
@@ -214,7 +170,7 @@ export default function ProfilePage() {
           <Lock size={16} style={{ color: 'var(--accent-primary)' }} />
           <h2 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>Change Password</h2>
         </div>
-        <form onSubmit={handlePwdSave} className="space-y-4">
+        <form onSubmit={handlePwdSave} className="space-y-4" noValidate>
           <div>
             <label className="label">Current Password</label>
             <div className="relative">
