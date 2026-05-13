@@ -31,6 +31,7 @@ public class AuthService {
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
+            .fullName(request.getName())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(User.Role.USER)
                 .build();
@@ -39,12 +40,21 @@ public class AuthService {
         return Map.of("message", "User registered successfully");
     }
 
-    public Map<String, String> login(LoginRequest request) {
+        public Map<String, Object> login(LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
         String token = jwtUtil.generateToken(auth.getName());
-        return Map.of("token", token);
-    }
+        User user = userRepository.findByUsername(auth.getName()).orElseThrow();
+
+        var userMap = Map.of(
+            "username", user.getUsername(),
+            "email", user.getEmail(),
+            "name", user.getFullName() != null ? user.getFullName() : user.getUsername(),
+            "role", user.getRole().name()
+        );
+
+        return Map.of("token", token, "user", userMap);
+        }
 }
