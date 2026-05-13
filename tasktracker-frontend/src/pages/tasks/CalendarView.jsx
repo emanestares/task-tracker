@@ -29,7 +29,8 @@ export default function CalendarView({ tasks, onEdit, onDelete }) {
     const map = {}
     tasks.forEach((t) => {
       if (!t.dueDate) return
-      const d = t.dueDate.slice(0, 10)
+      const d = typeof t.dueDate === 'string' ? t.dueDate.slice(0, 10) : null
+      if (!d) return // this stops null dates
       if (!map[d]) map[d] = []
       map[d].push(t)
     })

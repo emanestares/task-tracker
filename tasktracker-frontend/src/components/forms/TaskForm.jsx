@@ -23,14 +23,43 @@ export default function TaskForm({ initial = {}, onSubmit, onCancel, loading }) 
     if (!form.title.trim()) errs.title = 'Title is required.'
     if (form.title.length > 120) errs.title = 'Title must be under 120 characters.'
     if (form.description.length > 500) errs.description = 'Description must be under 500 characters.'
+
+    if (!form.dueDate) {
+        errs.dueDate = 'Due date is required.'
+      } else {
+        // ✅ NEW: prevent past dates
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        const selectedDate = new Date(form.dueDate)
+
+        if (selectedDate < today) {
+          errs.dueDate = 'Due date cannot be before today.'
+        }
+      }
     return errs
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+
     const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
-    onSubmit(form)
+
+    if (Object.keys(errs).length) {
+      setErrors(errs)
+      return
+    }
+
+    try {
+      setErrors({})
+      await onSubmit(form)
+    } catch (err) {
+      const backendErrors = err?.response?.data?.fields
+
+      if (backendErrors) {
+        setErrors(backendErrors)
+      }
+    }
   }
 
   return (
@@ -103,15 +132,18 @@ export default function TaskForm({ initial = {}, onSubmit, onCancel, loading }) 
       </div>
 
       {/* Due date */}
-      <div>
-        <label className="label">Due Date</label>
-        <input
-          type="date"
-          className="input-field"
-          value={form.dueDate}
-          onChange={(e) => set('dueDate', e.target.value)}
-        />
-      </div>
+      <input
+        type="date"
+        className={`input-field ${errors.dueDate ? 'error' : ''}`}
+        value={form.dueDate}
+        onChange={(e) => set('dueDate', e.target.value)}
+      />
+
+      {errors.dueDate && (
+        <p className="text-xs text-red-500 mt-1">
+          {errors.dueDate}
+        </p>
+      )}
 
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-2">

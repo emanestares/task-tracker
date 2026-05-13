@@ -1,6 +1,7 @@
 package com.tasktracker.exception;
 
 import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +37,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex) {
         return buildError(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    // 400 — invalid JSON / invalid date format
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidFormat(
+            HttpMessageNotReadableException ex) {
+
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+
+        fieldErrors.put("dueDate", "Invalid date format");
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", 400);
+        body.put("error", "Validation Failed");
+        body.put("fields", fieldErrors);
+
+        return ResponseEntity.badRequest().body(body);
     }
 
     // 500 — catch-all
