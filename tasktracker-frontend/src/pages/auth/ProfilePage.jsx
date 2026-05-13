@@ -37,24 +37,54 @@ export default function ProfilePage() {
 
   const validateProfile = () => {
     const errs = {}
-    if (!profileForm.name.trim()) errs.name = 'Name is required.'
+
+    // name (min 2 max 100)
+    if (!profileForm.name.trim()) {
+      errs.name = 'Name is required.'
+    } else if (profileForm.name.length < 2 || profileForm.name.length > 100) {
+      errs.name = 'Name must be between 2-100 characters.'
+    }
+
+    // username (min 3 max 50)
     if (!profileForm.username.trim()) {
-        errs.username = 'Username is required.'
-      }
+      errs.username = 'Username is required.'
+    } else if (profileForm.username.length < 3 || profileForm.username.length > 50) {
+      errs.username = 'Username must be between 3-50 characters.'
+    }
+
+    // email (not blank + email + max 100)
     if (!profileForm.email.trim()) {
       errs.email = 'Email is required.'
     } else if (!/\S+@\S+\.\S+/.test(profileForm.email)) {
       errs.email = 'Enter a valid email.'
+    } else if (profileForm.email.length > 100) {
+      errs.email = 'Email must be maximum 100 characters.'
     }
+
     return errs
   }
 
   const validatePwd = () => {
     const errs = {}
-    if (!pwdForm.currentPassword) errs.currentPassword = 'Current password is required.'
-    if (!pwdForm.newPassword) errs.newPassword = 'New password is required.'
-    if (pwdForm.newPassword.length < 6) errs.newPassword = 'Min 6 characters.'
-    if (pwdForm.newPassword !== pwdForm.confirmPassword) errs.confirmPassword = 'Passwords do not match.'
+
+    if (!pwdForm.currentPassword) {
+      errs.currentPassword = 'Current password is required.'
+    } else if (pwdForm.currentPassword.length < 6 || pwdForm.currentPassword.length > 100) {
+      errs.currentPassword = 'Must be 6-100 characters.'
+    }
+
+    if (!pwdForm.newPassword) {
+      errs.newPassword = 'New password is required.'
+    } else if (pwdForm.newPassword.length < 6) {
+      errs.newPassword = 'Min 6 characters.'
+    } else if (pwdForm.newPassword.length > 100) {
+      errs.newPassword = 'Maximum 100 characters.'
+    }
+
+    if (pwdForm.newPassword !== pwdForm.confirmPassword) {
+      errs.confirmPassword = 'Passwords do not match.'
+    }
+
     return errs
   }
 
