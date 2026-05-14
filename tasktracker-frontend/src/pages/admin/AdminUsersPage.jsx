@@ -4,7 +4,7 @@ import AdminService from '../../services/adminService'
 import PageHeader from '../../components/common/PageHeader'
 import SearchBar from '../../components/common/SearchBar'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
-import { EmptyState, Spinner } from '../../components/ui/index.jsx'
+import { EmptyState } from '../../components/ui/index.jsx'
 import { useDisclosure } from '../../hooks/index.js'
 import { getInitials, formatDate } from '../../utils'
 import toast from 'react-hot-toast'
@@ -63,17 +63,21 @@ export default function AdminUsersPage() {
         <SearchBar value={search} onChange={setSearch} placeholder="Search by name, username, or email…" className="max-w-sm" />
       </div>
 
-      <div className="card">
+      <div className="card overflow-hidden p-0">
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Spinner size={28} />
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="skeleton h-10 rounded-xl" />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState icon={Users} title="No users found" description="No users match your search." />
+          <div className="py-6">
+            <EmptyState icon={Users} title="No users found" description="No users match your search." />
+          </div>
         ) : (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto -mx-6">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border-primary)', borderBottom: '1px solid var(--border-primary)' }}>

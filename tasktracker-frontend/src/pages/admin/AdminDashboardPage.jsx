@@ -70,7 +70,8 @@ export default function AdminDashboardPage() {
             No tasks found in the system.
           </p>
         ) : (
-          <div className="overflow-x-auto -mx-6">
+          <div className="overflow-hidden rounded-xl border border-[var(--border-primary)]">
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border-primary)', borderBottom: '1px solid var(--border-primary)' }}>
@@ -101,6 +102,7 @@ export default function AdminDashboardPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

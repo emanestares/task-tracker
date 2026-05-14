@@ -3,7 +3,7 @@ import { ListChecks } from 'lucide-react'
 import AdminService from '../../services/adminService'
 import PageHeader from '../../components/common/PageHeader'
 import SearchBar from '../../components/common/SearchBar'
-import { StatusBadge, EmptyState, Pagination, Spinner } from '../../components/ui/index.jsx'
+import { StatusBadge, EmptyState, Pagination } from '../../components/ui/index.jsx'
 import { TASK_STATUS, PAGINATION_LIMIT } from '../../constants'
 import { formatDate, timeAgo, truncate } from '../../utils'
 import toast from 'react-hot-toast'
@@ -46,38 +46,46 @@ export default function AdminTasksPage() {
       />
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <SearchBar value={search} onChange={handleSearch} placeholder="Search tasks…" className="flex-1" />
-        <select
-          className="input-field text-sm"
-          value={statusFilter}
-          onChange={(e) => handleStatus(e.target.value)}
-          style={{ minWidth: 140 }}
-        >
-          <option value="">All Status</option>
-          {Object.entries(TASK_STATUS).map(([k, v]) => (
-            <option key={k} value={v}>
-              {v === 'IN_PROGRESS' ? 'In Progress' : v.charAt(0) + v.slice(1).toLowerCase()}
-            </option>
-          ))}
-        </select>
-        {(search || statusFilter) && (
-          <button className="btn-secondary text-sm"
-            onClick={() => { setSearch(''); setStatusFilter(''); setPage(1) }}>
-            Clear
-          </button>
-        )}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6 sm:items-center">
+        <div className="flex-1">
+          <SearchBar value={search} onChange={handleSearch} placeholder="Search tasks…" />
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            className="input-field text-sm h-10 px-3 py-2 rounded-lg"
+            value={statusFilter}
+            onChange={(e) => handleStatus(e.target.value)}
+            style={{ minWidth: 150, color: 'var(--text-primary)', backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }}
+          >
+            <option value="">All Status</option>
+            {Object.entries(TASK_STATUS).map(([k, v]) => (
+              <option key={k} value={v}>
+                {v === 'IN_PROGRESS' ? 'In Progress' : v.charAt(0) + v.slice(1).toLowerCase()}
+              </option>
+            ))}
+          </select>
+          {(search || statusFilter) && (
+            <button className="btn-secondary text-xs px-3 py-2 h-10 flex items-center justify-center whitespace-nowrap"
+              onClick={() => { setSearch(''); setStatusFilter(''); setPage(1) }}>
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="card">
+      <div className="card overflow-hidden p-0">
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Spinner size={28} />
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="skeleton h-10 rounded-xl" />
+            ))}
           </div>
         ) : paginated.length === 0 ? (
-          <EmptyState icon={ListChecks} title="No tasks found" description="Try adjusting your filters." />
+          <div className="py-6">
+            <EmptyState icon={ListChecks} title="No tasks found" description="Try adjusting your filters." />
+          </div>
         ) : (
-          <div className="overflow-x-auto -mx-6">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border-primary)', borderBottom: '1px solid var(--border-primary)' }}>
