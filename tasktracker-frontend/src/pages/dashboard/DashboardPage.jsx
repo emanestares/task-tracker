@@ -171,7 +171,7 @@ export default function DashboardPage() {
             </div>
             {loading
               ? <div className="skeleton h-8 w-12 rounded-lg" />
-              : <p className="text-3xl font-bold leading-none" style={{ color: '#0f172a', fontFamily: 'Inter Tight, Inter, sans-serif' }}>{value}</p>
+              : <p style={{ fontSize: 36, fontWeight: 800, lineHeight: 1, color: '#0f172a', fontFamily: 'Inter Tight, Inter, sans-serif', margin: 0 }}>{value}</p>
             }
           </div>
         ))}

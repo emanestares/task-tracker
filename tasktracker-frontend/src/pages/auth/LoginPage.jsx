@@ -11,23 +11,7 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [errors, setErrors] = useState({})
 
-  const extractError = (err) => {
-    const data = err.response?.data
-
-    const msg = data?.message || data?.error || 'Something went wrong'
-    const fields = data?.fields
-
-    const error = new Error(msg)
-    error.fields = fields
-
-    return error
-  }
-
-  const set = (k, v) => {
-    setForm((f) => ({ ...f, [k]: v }))
-    setErrors((e) => ({ ...e, [k]: undefined }))
-  }
-
+  const set = (k, v) => { setForm((f) => ({ ...f, [k]: v })); setErrors((e) => ({ ...e, [k]: undefined })) }
   const validate = () => {
     const errs = {}
     if (!form.username.trim()) errs.username = 'Username is required.'

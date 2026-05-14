@@ -19,19 +19,11 @@ export default function RegisterPage() {
 
   const validate = () => {
     const errs = {}
-    const email = form.email.trim()
-
-    if (!form.username.trim()) {
-      errs.username = 'Username is required.'
-    } else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-      errs.username = 'Username must not contain spaces or special characters.'
-    } else if (form.username.length < 3 || form.username.length > 50) {
-      errs.username = 'Username must be 3–50 characters.'
-    }
-    if (!email) errs.email = 'Email is required.'
-    if (email !== form.email || /\s/.test(email) || !/^\S+@\S+\.\S+$/.test(email)) {
-      errs.email = 'Enter a valid email address.'
-    }
+    if (!form.name.trim()) errs.name = 'Full name is required.'
+    if (!form.username.trim()) errs.username = 'Username is required.'
+    if (form.username.length < 3) errs.username = 'Username must be at least 3 characters.'
+    if (!form.email.trim()) errs.email = 'Email is required.'
+    if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Enter a valid email address.'
     if (!form.password) errs.password = 'Password is required.'
     if (form.password.length < 6) errs.password = 'Password must be at least 6 characters.'
     if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match.'
@@ -44,7 +36,7 @@ export default function RegisterPage() {
     if (Object.keys(errs).length) { setErrors(errs); return }
     try {
       const { confirmPassword, ...payload } = form
-      await register({ ...payload, email: payload.email.trim() })
+      await register(payload)
     } catch { /* handled by context */ }
   }
 
@@ -59,7 +51,7 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Full name */}
         <div>
           <label className="label">Full Name</label>

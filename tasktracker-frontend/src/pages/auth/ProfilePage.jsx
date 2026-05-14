@@ -37,32 +37,9 @@ export default function ProfilePage() {
 
   const validateProfile = () => {
     const errs = {}
-
-    const name = profileForm.name.trim()
-    const username = profileForm.username.trim()
-    const email = profileForm.email.trim()
-
-    // name
-    if (!name) {
-      errs.name = 'Name is required.'
-    }
-
-    // username
-    if (!username) {
-      errs.username = 'Username is required.'
-    } else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-      errs.username = 'Username must not contain spaces or special characters.'
-    } else if (username.length < 3 || username.length > 50) {
-      errs.username = 'Username must be 3–50 characters.'
-    }
-
-    // email
-    if (!email) {
-      errs.email = 'Email is required.'
-    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-      errs.email = 'Enter a valid email.'
-    }
-
+    if (!profileForm.name.trim()) errs.name = 'Name is required.'
+    if (!profileForm.email.trim()) errs.email = 'Email is required.'
+    if (!/\S+@\S+\.\S+/.test(profileForm.email)) errs.email = 'Enter a valid email.'
     return errs
   }
 
@@ -79,7 +56,7 @@ export default function ProfilePage() {
     e.preventDefault()
     const errs = validateProfile()
     if (Object.keys(errs).length) { setProfileErrors(errs); return }
-    try { await updateProfile({ ...profileForm, email: profileForm.email.trim() }) } catch { /* handled */ }
+    try { await updateProfile(profileForm) } catch { /* handled */ }
   }
 
   const handlePwdSave = async (e) => {
@@ -126,7 +103,7 @@ export default function ProfilePage() {
           <User size={16} style={{ color: 'var(--accent-primary)' }} />
           <h2 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>Personal Information</h2>
         </div>
-        <form onSubmit={handleProfileSave} className="space-y-4" noValidate>
+        <form onSubmit={handleProfileSave} className="space-y-4">
           <div>
             <label className="label">Full Name</label>
             <input type="text" className={`input-field ${profileErrors.name ? 'error' : ''}`}
@@ -136,17 +113,8 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Username</label>
-              <input
-              type="text"
-              className={`input-field ${profileErrors.username ? 'error' : ''}`}
-              value={profileForm.username}
-              onChange={(e) => setP('username', e.target.value)}
-            />
-            {profileErrors.username && (
-              <p className="text-xs text-red-500 mt-1">
-                {profileErrors.username}
-              </p>
-            )}
+              <input type="text" className="input-field"
+                value={profileForm.username} onChange={(e) => setP('username', e.target.value)} />
             </div>
             <div>
               <label className="label">Email</label>
@@ -170,7 +138,7 @@ export default function ProfilePage() {
           <Lock size={16} style={{ color: 'var(--accent-primary)' }} />
           <h2 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>Change Password</h2>
         </div>
-        <form onSubmit={handlePwdSave} className="space-y-4" noValidate>
+        <form onSubmit={handlePwdSave} className="space-y-4">
           <div>
             <label className="label">Current Password</label>
             <div className="relative">
