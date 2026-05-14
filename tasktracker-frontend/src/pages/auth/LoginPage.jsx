@@ -37,7 +37,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidates>
         <div>
           <label className="label">Username</label>
           <input

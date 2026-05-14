@@ -18,17 +18,46 @@ export default function RegisterPage() {
   }
 
   const validate = () => {
-    const errs = {}
-    if (!form.name.trim()) errs.name = 'Full name is required.'
-    if (!form.username.trim()) errs.username = 'Username is required.'
-    if (form.username.length < 3) errs.username = 'Username must be at least 3 characters.'
-    if (!form.email.trim()) errs.email = 'Email is required.'
-    if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Enter a valid email address.'
-    if (!form.password) errs.password = 'Password is required.'
-    if (form.password.length < 6) errs.password = 'Password must be at least 6 characters.'
-    if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match.'
-    return errs
-  }
+    const errs = {};
+
+
+    const name = form.name.trim();
+    const username = form.username.trim();
+    const email = form.email.trim();
+    const password = form.password; 
+
+    if (!name) {
+      errs.name = 'Full name is required.';
+    }
+
+    if (!username) {
+      errs.username = 'Username is required.';
+    } else if (username.length < 3) {
+      errs.username = 'Username must be at least 3 characters.';
+    } else if (/\s/.test(username)) {
+      errs.username = 'Username cannot contain spaces.';
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      errs.email = 'Email is required.';
+    } else if (!emailRegex.test(email)) {
+      errs.email = 'Enter a valid email address (no spaces allowed).';
+    }
+
+    
+    if (!password) {
+      errs.password = 'Password is required.';
+    } else if (password.length < 6) {
+      errs.password = 'Password must be at least 6 characters.';
+    }
+
+    if (password !== form.confirmPassword) {
+      errs.confirmPassword = 'Passwords do not match.';
+    }
+
+    return errs;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -51,7 +80,7 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {/* Full name */}
         <div>
           <label className="label">Full Name</label>

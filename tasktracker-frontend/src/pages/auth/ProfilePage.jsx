@@ -36,22 +36,52 @@ export default function ProfilePage() {
   }
 
   const validateProfile = () => {
-    const errs = {}
-    if (!profileForm.name.trim()) errs.name = 'Name is required.'
-    if (!profileForm.email.trim()) errs.email = 'Email is required.'
-    if (!/\S+@\S+\.\S+/.test(profileForm.email)) errs.email = 'Enter a valid email.'
-    return errs
-  }
+    const errs = {};
+    const username = profileForm.username.trim();
+    const name = profileForm.name.trim();
+    const email = profileForm.email.trim();
+
+    if (!name) {errs.name = 'Name is required.';}
+    if (!username) {
+        errs.username = 'Username is required.';
+      } 
+      else if (username.length < 3) {
+        errs.username = 'Username must be at least 3 characters.';
+      } 
+      else if (/\s/.test(profileForm.username)) { 
+        errs.username = 'Username cannot contain spaces.';
+      }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      errs.email = 'Email is required.';
+    }
+    else if (!emailRegex.test(email)) {
+      errs.email = 'Enter a valid email address (no spaces allowed).';}
+
+    return errs;
+  };
 
   const validatePwd = () => {
-    const errs = {}
-    if (!pwdForm.currentPassword) errs.currentPassword = 'Current password is required.'
-    if (!pwdForm.newPassword) errs.newPassword = 'New password is required.'
-    if (pwdForm.newPassword.length < 6) errs.newPassword = 'Min 6 characters.'
-    if (pwdForm.newPassword !== pwdForm.confirmPassword) errs.confirmPassword = 'Passwords do not match.'
-    return errs
-  }
+    const errs = {};
+    const { currentPassword, newPassword, confirmPassword } = pwdForm;
 
+    if (!currentPassword) {
+      errs.currentPassword = 'Current password is required.';
+    }
+
+    if (!newPassword) {
+      errs.newPassword = 'New password is required.';
+    } else if (newPassword.length < 6) {
+      errs.newPassword = 'Min 6 characters.';
+    }
+
+    if (newPassword !== confirmPassword) {
+      errs.confirmPassword = 'Passwords do not match.';
+    }
+
+    return errs;
+  };
+  
   const handleProfileSave = async (e) => {
     e.preventDefault()
     const errs = validateProfile()
@@ -103,7 +133,7 @@ export default function ProfilePage() {
           <User size={16} style={{ color: 'var(--accent-primary)' }} />
           <h2 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>Personal Information</h2>
         </div>
-        <form onSubmit={handleProfileSave} className="space-y-4">
+        <form onSubmit={handleProfileSave} className="space-y-4" noValidate>
           <div>
             <label className="label">Full Name</label>
             <input type="text" className={`input-field ${profileErrors.name ? 'error' : ''}`}
@@ -113,8 +143,10 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Username</label>
-              <input type="text" className="input-field"
+              <input
+                type="text" className={`input-field ${profileErrors.username ? 'error' : ''}`}
                 value={profileForm.username} onChange={(e) => setP('username', e.target.value)} />
+              {profileErrors.username && (<p className="text-xs text-red-500 mt-1">{profileErrors.username}</p>)}
             </div>
             <div>
               <label className="label">Email</label>

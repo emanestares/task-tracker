@@ -30,7 +30,7 @@ public class AuthController {
     }
 
     @PostMapping("/edit")
-    public ResponseEntity<Map<String, Object>> edit(@RequestBody EditProfileRequest request) {
+    public ResponseEntity<Map<String, Object>> edit(@Valid @RequestBody EditProfileRequest request) {
         return ResponseEntity.ok(authService.editProfile(request));
     }
 }
