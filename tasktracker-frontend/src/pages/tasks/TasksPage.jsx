@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Pencil, Trash2, CheckSquare, Calendar, List, BarChart2, Search, X, SlidersHorizontal, ArrowUp, ArrowDown } from 'lucide-react'
+import { Plus, Pencil, Trash2, CheckSquare, Calendar, List, BarChart2, Search, X, SlidersHorizontal, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react'
 import { useTasks, useDebounce, useDisclosure } from '../../hooks/index.js'
 import { TASK_STATUS, PAGINATION_LIMIT } from '../../constants'
 import PageHeader from '../../components/common/PageHeader'
@@ -21,18 +21,90 @@ const P = {
 function PriorityBadge({ priority }) {
   const cfg = P[priority] || P.LOW
   return (
-    <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 13px', borderRadius:999, fontSize:13, fontWeight:700, backgroundColor:cfg.bg, color:cfg.dot, border:`1.5px solid ${cfg.border}` }}>
-      <span style={{ width:8, height:8, borderRadius:'50%', backgroundColor:cfg.dot, flexShrink:0 }} />
+    <span className="badge" style={{ backgroundColor:cfg.bg, color:cfg.dot, border:`1px solid ${cfg.border}` }}>
+      <span style={{ width:6, height:6, borderRadius:'50%', backgroundColor:cfg.dot, flexShrink:0 }} />
       {cfg.label}
     </span>
   )
 }
 
 /* ══════════════════════════════════════════════════════════════
-   CHART VIEW — Pie chart + Bar chart using Canvas
+   DONUT CHART — matches dashboard style
+══════════════════════════════════════════════════════════════ */
+function DonutChart({ segments, total, centerLabel }) {
+  const size = 148
+  const strokeWidth = 14
+  const gap = 2
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const cx = size / 2, cy = size / 2
+
+  let offset = 0
+  const gapAngle = total > 0 ? gap / circumference : 0
+  const arcs = segments.map((seg) => {
+    const pct = total > 0 ? seg.value / total : 0
+    const adjustedPct = Math.max(0, pct - gapAngle)
+    const dash = adjustedPct * circumference
+    const arc = { ...seg, dashArray: `${dash} ${circumference - dash}`, dashOffset: -offset * circumference }
+    offset += pct
+    return arc
+  })
+
+  const donePct = total > 0 ? Math.round(((segments.find(s => s.key === 'DONE')?.value || 0) / total) * 100) : 0
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:24 }}>
+        <div style={{ position:'relative', flexShrink:0 }}>
+          <svg width={size} height={size} style={{ transform:'rotate(-90deg)' }}>
+            <circle cx={cx} cy={cy} r={radius} fill="none" stroke="var(--border-primary)" strokeWidth={strokeWidth} />
+            {arcs.map((arc, i) => (
+              <circle key={i} cx={cx} cy={cy} r={radius} fill="none"
+                stroke={arc.color} strokeWidth={strokeWidth}
+                strokeDasharray={arc.dashArray} strokeDashoffset={arc.dashOffset}
+                strokeLinecap="round"
+                style={{ transition:'stroke-dasharray 0.9s cubic-bezier(0.4,0,0.2,1)' }}
+              />
+            ))}
+          </svg>
+          <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+            <span style={{ fontSize:24, fontWeight:800, lineHeight:1, color:'var(--text-primary)', fontFamily:'Inter Tight, Inter, sans-serif' }}>{donePct}%</span>
+            <span style={{ fontSize:11, fontWeight:500, marginTop:2, color:'var(--text-muted)' }}>done</span>
+          </div>
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:8, flex:1 }}>
+          {segments.map((seg) => {
+            const pct = total > 0 ? Math.round((seg.value / total) * 100) : 0
+            return (
+              <div key={seg.label} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', backgroundColor:seg.color, flexShrink:0 }} />
+                <span style={{ fontSize:12, flex:1, color:'var(--text-secondary)' }}>{seg.label}</span>
+                <span style={{ fontSize:12, fontWeight:700, color:'var(--text-primary)', fontVariantNumeric:'tabular-nums' }}>{seg.value}</span>
+                <span style={{ fontSize:11, color:'var(--text-muted)', fontVariantNumeric:'tabular-nums', minWidth:28, textAlign:'right' }}>{pct}%</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+      {/* mini progress bar row */}
+      <div style={{ display:'flex', gap:3 }}>
+        {segments.map((seg) => {
+          const pct = total > 0 ? (seg.value / total) * 100 : 0
+          return (
+            <div key={seg.label} style={{ flex:1, height:4, borderRadius:999, background:'var(--border-primary)', overflow:'hidden' }}>
+              <div style={{ height:'100%', width:`${pct}%`, backgroundColor:seg.color, borderRadius:999, transition:'width 0.9s cubic-bezier(0.4,0,0.2,1)' }} />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CHART VIEW
 ══════════════════════════════════════════════════════════════ */
 function ChartView({ tasks }) {
-  const pieRef = useRef(null)
   const barRef = useRef(null)
 
   const stats = useMemo(() => {
@@ -54,68 +126,18 @@ function ChartView({ tasks }) {
     return { byStatus, byPriority, total: tasks.length }
   }, [tasks])
 
-  /* ── Pie Chart ── */
-  useEffect(() => {
-    const canvas = pieRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    const dpr = window.devicePixelRatio || 1
-    const size = canvas.clientWidth
-    canvas.width  = size * dpr
-    canvas.height = size * dpr
-    ctx.scale(dpr, dpr)
+  const statusSegments = [
+    { key:'DONE',        label:'Done',        value: stats.byStatus.DONE,        color:'#10b981' },
+    { key:'IN_PROGRESS', label:'In Progress', value: stats.byStatus.IN_PROGRESS, color:'#6366f1' },
+    { key:'TODO',        label:'To Do',       value: stats.byStatus.TODO,        color:'#e2e8f0' },
+    { key:'CANCELLED',   label:'Cancelled',   value: stats.byStatus.CANCELLED,   color:'#f43f5e' },
+  ]
 
-    const cx = size / 2, cy = size / 2
-    const R = size * 0.36, r = size * 0.2
-
-    const slices = [
-      { label: 'To Do',       value: stats.byStatus.TODO,        color: '#94a3b8' },
-      { label: 'In Progress', value: stats.byStatus.IN_PROGRESS, color: '#3b82f6' },
-      { label: 'Done',        value: stats.byStatus.DONE,        color: '#10b981' },
-      { label: 'Cancelled',   value: stats.byStatus.CANCELLED,   color: '#f43f5e' },
-    ].filter(s => s.value > 0)
-
-    const total = slices.reduce((s, sl) => s + sl.value, 0)
-    if (total === 0) {
-      ctx.fillStyle = '#94a3b820'
-      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill()
-      ctx.fillStyle = '#94a3b8'
-      ctx.font = `600 ${size * 0.07}px Inter, sans-serif`
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-      ctx.fillText('No tasks', cx, cy)
-      return
-    }
-
-    let angle = -Math.PI / 2
-    slices.forEach(sl => {
-      const sweep = (sl.value / total) * Math.PI * 2
-      ctx.beginPath()
-      ctx.moveTo(cx, cy)
-      ctx.arc(cx, cy, R, angle, angle + sweep)
-      ctx.closePath()
-      ctx.fillStyle = sl.color
-      ctx.fill()
-      ctx.strokeStyle = 'var(--bg-card, #fff)'
-      ctx.lineWidth = 3
-      ctx.stroke()
-      angle += sweep
-    })
-
-    // Donut hole
-    ctx.beginPath()
-    ctx.arc(cx, cy, r, 0, Math.PI * 2)
-    ctx.fillStyle = 'var(--bg-card, #ffffff)'
-    ctx.fill()
-
-    // Center text
-    ctx.fillStyle = '#0f172a'
-    ctx.font = `800 ${size * 0.11}px Inter, sans-serif`
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    ctx.fillText(total, cx, cy - size * 0.04)
-    ctx.font = `500 ${size * 0.065}px Inter, sans-serif`
-    ctx.fillStyle = '#64748b'
-    ctx.fillText('tasks', cx, cy + size * 0.06)
-  }, [stats])
+  const prioritySegments = [
+    { key:'HIGH',   label:'High',   value: stats.byPriority[0]?.total ?? 0, color:'#ef4444' },
+    { key:'MEDIUM', label:'Medium', value: stats.byPriority[1]?.total ?? 0, color:'#f59e0b' },
+    { key:'LOW',    label:'Low',    value: stats.byPriority[2]?.total ?? 0, color:'#10b981' },
+  ]
 
   /* ── Bar Chart ── */
   useEffect(() => {
@@ -128,34 +150,28 @@ function ChartView({ tasks }) {
     canvas.height = H * dpr
     ctx.scale(dpr, dpr)
 
-    const padL = 40, padR = 20, padT = 20, padB = 50
+    const padL = 12, padR = 12, padT = 16, padB = 44
     const chartW = W - padL - padR
     const chartH = H - padT - padB
 
-    const groups  = stats.byPriority
-    const maxVal  = Math.max(...groups.map(g => g.total), 1)
-    const groupW  = chartW / groups.length
-    const barW    = groupW * 0.22
-    const gap     = barW * 0.35
-    const subColors = ['#94a3b8','#3b82f6','#10b981']
+    const groups   = stats.byPriority
+    const maxVal   = Math.max(...groups.map(g => g.total), 1)
+    const groupW   = chartW / groups.length
+    const barW     = groupW * 0.22
+    const gap      = barW * 0.35
+    const subColors = ['#e2e8f0','#6366f1','#10b981']
     const subKeys   = ['todo','inProgress','done']
 
-    // Y gridlines
+    // subtle gridlines
     const steps = 4
     for (let i = 0; i <= steps; i++) {
       const y = padT + chartH - (i / steps) * chartH
-      const val = Math.round((i / steps) * maxVal)
       ctx.beginPath()
-      ctx.strokeStyle = '#e2e8f020'
+      ctx.strokeStyle = 'rgba(148,163,184,0.12)'
       ctx.lineWidth = 1
       ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke()
-      ctx.fillStyle = '#94a3b8'
-      ctx.font = `500 11px Inter, sans-serif`
-      ctx.textAlign = 'right'; ctx.textBaseline = 'middle'
-      ctx.fillText(val, padL - 6, y)
     }
 
-    // Bars
     groups.forEach((g, gi) => {
       const groupX = padL + gi * groupW + groupW / 2
       const startX = groupX - (3 * barW + 2 * gap) / 2
@@ -165,9 +181,8 @@ function ChartView({ tasks }) {
         const barH = val > 0 ? Math.max((val / maxVal) * chartH, 4) : 0
         const x = startX + ki * (barW + gap)
         const y = padT + chartH - barH
+        const rad = Math.min(barW / 2, 5)
 
-        // Rounded top bar
-        const rad = Math.min(barW / 2, 6)
         ctx.beginPath()
         ctx.moveTo(x + rad, y)
         ctx.lineTo(x + barW - rad, y)
@@ -178,106 +193,87 @@ function ChartView({ tasks }) {
         ctx.quadraticCurveTo(x, y, x + rad, y)
         ctx.closePath()
         ctx.fillStyle = subColors[ki]
-        ctx.globalAlpha = 0.88
+        ctx.globalAlpha = 0.9
         ctx.fill()
         ctx.globalAlpha = 1
-
-        // Value on top
-        if (val > 0) {
-          ctx.fillStyle = subColors[ki]
-          ctx.font = `700 11px Inter, sans-serif`
-          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'
-          ctx.fillText(val, x + barW / 2, y - 3)
-        }
       })
 
-      // X label
+      // X group label
       ctx.fillStyle = '#64748b'
-      ctx.font = `600 13px Inter, sans-serif`
+      ctx.font = `600 12px Inter, sans-serif`
       ctx.textAlign = 'center'; ctx.textBaseline = 'top'
-      ctx.fillText(g.label, groupX, padT + chartH + 10)
+      ctx.fillText(g.label, groupX, padT + chartH + 12)
+
+      // small colored dot under label
+      const dotColors = ['#ef4444','#f59e0b','#10b981']
+      ctx.beginPath()
+      ctx.arc(groupX, padT + chartH + 28, 4, 0, Math.PI * 2)
+      ctx.fillStyle = dotColors[gi]
+      ctx.fill()
     })
   }, [stats])
 
-  const statusLegend = [
-    { label:'To Do',       color:'#94a3b8', val: stats.byStatus.TODO },
-    { label:'In Progress', color:'#3b82f6', val: stats.byStatus.IN_PROGRESS },
-    { label:'Done',        color:'#10b981', val: stats.byStatus.DONE },
-    { label:'Cancelled',   color:'#f43f5e', val: stats.byStatus.CANCELLED },
-  ]
   const barLegend = [
-    { label:'To Do',       color:'#94a3b8' },
-    { label:'In Progress', color:'#3b82f6' },
+    { label:'To Do',       color:'#e2e8f0' },
+    { label:'In Progress', color:'#6366f1' },
     { label:'Done',        color:'#10b981' },
   ]
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+    <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
 
-      {/* ── Row: Pie + summary stats ── */}
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-
-        {/* Pie */}
+        {/* Status donut */}
         <div className="card" style={{ padding:24 }}>
-          <h3 style={{ fontSize:16, fontWeight:700, color:'var(--text-primary)', margin:'0 0 4px' }}>Task Status</h3>
-          <p style={{ fontSize:13, color:'var(--text-muted)', margin:'0 0 20px' }}>Distribution by current status</p>
-          <div style={{ display:'flex', alignItems:'center', gap:24 }}>
-            <canvas ref={pieRef} style={{ width:180, height:180, flexShrink:0 }} />
-            <div style={{ display:'flex', flexDirection:'column', gap:10, flex:1 }}>
-              {statusLegend.map(({ label, color, val }) => (
-                <div key={label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <span style={{ width:11, height:11, borderRadius:3, backgroundColor:color, flexShrink:0 }} />
-                    <span style={{ fontSize:13, fontWeight:500, color:'var(--text-secondary)' }}>{label}</span>
-                  </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <div style={{ width:60, height:6, borderRadius:999, backgroundColor:color+'20', overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${stats.total > 0 ? (val/stats.total)*100 : 0}%`, backgroundColor:color, borderRadius:999 }} />
-                    </div>
-                    <span style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)', minWidth:20, textAlign:'right' }}>{val}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+            <h3 style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)', margin:0 }}>By Status</h3>
+            {stats.total > 0 && (
+              <span style={{ fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:999, backgroundColor:'#ecfdf5', color:'#10b981', border:'1px solid #a7f3d0' }}>
+                {stats.byStatus.DONE} done
+              </span>
+            )}
           </div>
+          {stats.total === 0
+            ? <p style={{ fontSize:12, textAlign:'center', padding:'32px 0', color:'var(--text-muted)' }}>No tasks yet</p>
+            : <DonutChart segments={statusSegments} total={stats.total} />
+          }
         </div>
 
-        {/* Summary numbers */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
-          {[
-            { label:'Total Tasks',    val:stats.total,                        color:'#3b82f6', sub:'all tasks' },
-            { label:'Completed',      val:stats.byStatus.DONE,                color:'#10b981', sub:`${stats.total>0?Math.round((stats.byStatus.DONE/stats.total)*100):0}% done` },
-            { label:'In Progress',    val:stats.byStatus.IN_PROGRESS,         color:'#f59e0b', sub:'active now' },
-            { label:'High Priority',  val:stats.byPriority[0]?.total ?? 0,   color:'#ef4444', sub:`${stats.byPriority[0]?.done ?? 0} done` },
-          ].map(({ label, val, color, sub }) => (
-            <div key={label} className="card" style={{ padding:20, textAlign:'center' }}>
-              <p style={{ fontSize:36, fontWeight:800, color, lineHeight:1, margin:'0 0 4px' }}>{val}</p>
-              <p style={{ fontSize:14, fontWeight:600, color:'var(--text-primary)', margin:'0 0 2px' }}>{label}</p>
-              <p style={{ fontSize:12, color:'var(--text-muted)', margin:0 }}>{sub}</p>
-            </div>
-          ))}
+        {/* Priority donut */}
+        <div className="card" style={{ padding:24 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+            <h3 style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)', margin:0 }}>By Priority</h3>
+            {stats.byPriority[0]?.total > 0 && (
+              <span style={{ fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:999, backgroundColor:'#fef2f2', color:'#ef4444', border:'1px solid #fecaca' }}>
+                {stats.byPriority[0].total} high
+              </span>
+            )}
+          </div>
+          {stats.total === 0
+            ? <p style={{ fontSize:12, textAlign:'center', padding:'32px 0', color:'var(--text-muted)' }}>No tasks yet</p>
+            : <DonutChart segments={prioritySegments} total={prioritySegments.reduce((s, seg) => s + seg.value, 0)} />
+          }
         </div>
       </div>
 
-      {/* ── Bar chart ── */}
+      {/* Bar chart */}
       <div className="card" style={{ padding:24 }}>
         <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:16 }}>
           <div>
-            <h3 style={{ fontSize:16, fontWeight:700, color:'var(--text-primary)', margin:'0 0 4px' }}>Tasks by Priority</h3>
-            <p style={{ fontSize:13, color:'var(--text-muted)', margin:0 }}>Breakdown of To Do / In Progress / Done per priority level</p>
+            <h3 style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)', margin:'0 0 2px' }}>Status by Priority</h3>
+            <p style={{ fontSize:12, color:'var(--text-muted)', margin:0 }}>To Do / In Progress / Done per priority level</p>
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:14, flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12, flexShrink:0 }}>
             {barLegend.map(({ label, color }) => (
-              <div key={label} style={{ display:'flex', alignItems:'center', gap:6 }}>
-                <span style={{ width:10, height:10, borderRadius:3, backgroundColor:color }} />
-                <span style={{ fontSize:12, color:'var(--text-secondary)', fontWeight:500 }}>{label}</span>
+              <div key={label} style={{ display:'flex', alignItems:'center', gap:5 }}>
+                <span style={{ width:8, height:8, borderRadius:3, backgroundColor:color, border: color === '#e2e8f0' ? '1px solid #cbd5e1' : 'none' }} />
+                <span style={{ fontSize:11, color:'var(--text-secondary)', fontWeight:500 }}>{label}</span>
               </div>
             ))}
           </div>
         </div>
-        <canvas ref={barRef} style={{ width:'100%', height:220 }} />
+        <canvas ref={barRef} style={{ width:'100%', height:200 }} />
       </div>
-
     </div>
   )
 }
@@ -422,7 +418,10 @@ export default function TasksPage() {
 
           <div style={{ width:1, height:24, backgroundColor:'var(--border-secondary)' }} />
 
-          <span style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em', color:'var(--text-muted)' }}>Sort</span>
+          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <ArrowUpDown size={15} style={{ color:'var(--text-muted)' }} />
+            <span style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'.07em', color:'var(--text-muted)' }}>Sort</span>
+          </div>
 
           <select value={sortBy} onChange={e => { setSortBy(e.target.value); setPage(1) }} style={sel(false)}>
             <option value="priority">By Priority</option>

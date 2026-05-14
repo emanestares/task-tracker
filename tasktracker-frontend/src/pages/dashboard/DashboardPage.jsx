@@ -9,23 +9,26 @@ import { ROUTES, TASK_STATUS, TASK_PRIORITY } from '../../constants'
 import { formatDate, timeAgo, truncate } from '../../utils'
 
 function DonutChart({ done, inProgress, todo, total }) {
-  const size = 130
-  const strokeWidth = 15
+  const size = 140
+  const strokeWidth = 14
+  const gap = 2
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const cx = size / 2
   const cy = size / 2
 
   const segments = [
-    { value: done, color: '#10b981', label: 'Done' },
-    { value: inProgress, color: '#2563eb', label: 'In Progress' },
-    { value: todo, color: '#e2e8f0', label: 'To Do' },
+    { value: done, color: '#10b981', label: 'Done', bg: '#ecfdf5', text: '#059669' },
+    { value: inProgress, color: '#6366f1', label: 'In Progress', bg: '#eef2ff', text: '#4f46e5' },
+    { value: todo, color: '#e2e8f0', label: 'To Do', bg: '#f8fafc', text: '#64748b' },
   ]
 
   let offset = 0
+  const gapAngle = total > 0 ? gap / circumference : 0
   const arcs = segments.map((seg) => {
     const pct = total > 0 ? seg.value / total : 0
-    const dash = pct * circumference
+    const adjustedPct = Math.max(0, pct - gapAngle)
+    const dash = adjustedPct * circumference
     const arc = { ...seg, dashArray: `${dash} ${circumference - dash}`, dashOffset: -offset * circumference }
     offset += pct
     return arc
@@ -34,49 +37,60 @@ function DonutChart({ done, inProgress, todo, total }) {
   const completionPct = total > 0 ? Math.round((done / total) * 100) : 0
 
   return (
-    <div className="flex items-center gap-6">
-      <div className="relative flex-shrink-0">
-        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.08))' }}>
-          {arcs.map((arc, i) => (
-            <circle
-              key={i}
-              cx={cx} cy={cy} r={radius}
-              fill="none"
-              stroke={arc.color}
-              strokeWidth={strokeWidth}
-              strokeDasharray={arc.dashArray}
-              strokeDashoffset={arc.dashOffset}
-              strokeLinecap="butt"
-              style={{ transition: 'stroke-dasharray 0.8s cubic-bezier(0.4,0,0.2,1)' }}
-            />
-          ))}
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold leading-none" style={{ color: 'var(--text-primary)', fontFamily: 'Inter Tight, Inter, sans-serif' }}>
-            {completionPct}%
-          </span>
-          <span className="text-xs font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>complete</span>
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center gap-6">
+        <div className="relative flex-shrink-0">
+          <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+            <circle cx={cx} cy={cy} r={radius} fill="none" stroke="var(--border-primary)" strokeWidth={strokeWidth} />
+            {arcs.map((arc, i) => (
+              <circle
+                key={i}
+                cx={cx} cy={cy} r={radius}
+                fill="none"
+                stroke={arc.color}
+                strokeWidth={strokeWidth}
+                strokeDasharray={arc.dashArray}
+                strokeDashoffset={arc.dashOffset}
+                strokeLinecap="round"
+                style={{ transition: 'stroke-dasharray 0.9s cubic-bezier(0.4,0,0.2,1)' }}
+              />
+            ))}
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span style={{ fontSize: 26, fontWeight: 800, lineHeight: 1, color: 'var(--text-primary)', fontFamily: 'Inter Tight, Inter, sans-serif' }}>
+              {completionPct}%
+            </span>
+            <span className="text-xs font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>done</span>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 flex-1">
+          {segments.map((seg) => {
+            const pct = total > 0 ? Math.round((seg.value / total) * 100) : 0
+            return (
+              <div key={seg.label} className="flex items-center gap-2.5">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: seg.color }} />
+                <span className="text-xs flex-1" style={{ color: 'var(--text-secondary)' }}>{seg.label}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>{seg.value}</span>
+                  <span className="text-xs tabular-nums" style={{ color: 'var(--text-muted)' }}>{pct}%</span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
-      <div className="space-y-3 flex-1">
-        {segments.map((seg) => (
-          <div key={seg.label} className="flex items-center gap-2.5">
-            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: seg.color }} />
-            <span className="text-xs font-medium flex-1" style={{ color: 'var(--text-secondary)' }}>{seg.label}</span>
-            <span
-              className="text-sm font-bold tabular-nums"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {seg.value}
-            </span>
-          </div>
-        ))}
-        <div className="pt-2" style={{ borderTop: '1px solid var(--border-primary)' }}>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Total tasks</span>
-            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{total}</span>
-          </div>
-        </div>
+      <div className="flex gap-2">
+        {segments.map((seg) => {
+          const pct = total > 0 ? (seg.value / total) * 100 : 0
+          return (
+            <div key={seg.label} className="flex-1 rounded-lg overflow-hidden" style={{ height: 4, background: 'var(--border-primary)' }}>
+              <div
+                className="h-full rounded-lg"
+                style={{ width: `${pct}%`, backgroundColor: seg.color, transition: 'width 0.9s cubic-bezier(0.4,0,0.2,1)' }}
+              />
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -287,34 +301,27 @@ export default function DashboardPage() {
             {recent.map((task, i) => (
               <div
                 key={task.id}
-                className="flex items-center gap-3.5 py-3 group"
+                className="flex items-center gap-3 py-2 group"
                 style={{ borderBottom: i < recent.length - 1 ? '1px solid var(--border-primary)' : 'none' }}
               >
                 <div
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{
                     backgroundColor:
                       task.status === TASK_STATUS.DONE ? '#10b981'
-                      : task.status === TASK_STATUS.IN_PROGRESS ? '#2563eb'
+                      : task.status === TASK_STATUS.IN_PROGRESS ? '#6366f1'
                       : task.status === TASK_STATUS.CANCELLED ? '#ef4444'
                       : '#94a3b8',
                   }}
                 />
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={`text-sm font-medium truncate transition-colors group-hover:text-blue-600 ${task.status === TASK_STATUS.DONE ? 'line-through opacity-40' : ''}`}
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    {task.title}
-                  </p>
-                  {task.description && (
-                    <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
-                      {truncate(task.description, 60)}
-                    </p>
-                  )}
-                </div>
+                <p
+                  className={`text-xs font-medium truncate flex-1 transition-colors group-hover:text-blue-600 ${task.status === TASK_STATUS.DONE ? 'line-through opacity-40' : ''}`}
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {task.title}
+                </p>
                 <StatusBadge status={task.status} />
-                <span className="text-xs hidden sm:block flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+                <span className="text-xs hidden sm:block flex-shrink-0 w-16 text-right" style={{ color: 'var(--text-muted)' }}>
                   {timeAgo(task.createdAt || task.created_at)}
                 </span>
               </div>
