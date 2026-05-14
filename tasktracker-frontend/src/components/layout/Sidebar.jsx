@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, CheckSquare, Users, ListChecks,
-  Settings, X, ShieldCheck, LogOut,
+  Settings, X, ShieldCheck, LogOut, Zap,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { ROUTES } from '../../constants'
@@ -21,43 +21,43 @@ const adminNav = [
 export default function Sidebar({ open, onClose, isAdmin }) {
   const { user, logout } = useAuth()
   const nav = isAdmin ? adminNav : userNav
-
   const initials = (user?.name || user?.username || 'U')
     .split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
 
   return (
     <>
+      {/* Desktop */}
       <aside
-        className="hidden lg:flex flex-col flex-shrink-0 h-full overflow-y-auto"
-        style={{ width: 'var(--sidebar-width)', backgroundColor: 'var(--bg-sidebar)' }}
+        className="hidden lg:flex flex-col flex-shrink-0 h-full"
+        style={{
+          width: 'var(--sidebar-width)',
+          backgroundColor: 'var(--bg-sidebar)',
+          borderRight: '1px solid var(--border-sidebar)',
+        }}
       >
         <SidebarContent nav={nav} user={user} initials={initials} logout={logout} isAdmin={isAdmin} />
       </aside>
 
       {/* Mobile backdrop */}
       {open && (
-        <div
-          className="fixed inset-0 z-20 bg-black/40 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 z-20 bg-black/30 backdrop-blur-sm lg:hidden" onClick={onClose} />
       )}
 
       {/* Mobile drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex flex-col lg:hidden
-          transform transition-transform duration-250 ease-in-out overflow-y-auto`}
+        className="fixed inset-y-0 left-0 z-30 flex flex-col lg:hidden overflow-y-auto transition-transform duration-300 ease-in-out"
         style={{
           width: 'var(--sidebar-width)',
           backgroundColor: 'var(--bg-sidebar)',
+          borderRight: '1px solid var(--border-sidebar)',
           transform: open ? 'translateX(0)' : 'translateX(-100%)',
         }}
       >
         <button
           onClick={onClose}
-          className="absolute top-3.5 right-3.5 p-1.5 rounded-md transition-colors"
-          style={{ color: 'var(--text-sidebar-muted)' }}
+          className="absolute top-4 right-4 p-1.5 rounded-lg btn-ghost"
         >
-          <X size={15} />
+          <X size={16} />
         </button>
         <SidebarContent nav={nav} user={user} initials={initials} logout={logout} isAdmin={isAdmin} />
       </aside>
@@ -67,37 +67,40 @@ export default function Sidebar({ open, onClose, isAdmin }) {
 
 function SidebarContent({ nav, user, initials, logout, isAdmin }) {
   return (
-    <div className="flex flex-col h-full px-3 py-5">
+    <div className="flex flex-col h-full px-3 py-5 overflow-y-auto">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-2 mb-7">
+      <div className="flex items-center gap-2.5 px-2 mb-8">
         <div
-          className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: 'var(--accent-primary)' }}
+          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{
+            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+            boxShadow: '0 2px 8px rgba(37,99,235,0.35)',
+          }}
         >
-          <CheckSquare size={13} strokeWidth={2.5} color="#fff" />
+          <Zap size={15} strokeWidth={2.5} color="#fff" />
         </div>
         <div>
           <span
-            className="font-semibold text-sm block leading-tight"
-            style={{ color: 'var(--text-sidebar)', letterSpacing: '-0.01em' }}
+            className="font-bold text-sm block leading-tight"
+            style={{ color: 'var(--text-sidebar)', fontFamily: 'Inter Tight, Inter, sans-serif', letterSpacing: '-0.02em' }}
           >
             TaskFlow
           </span>
           {isAdmin && (
-            <span className="text-xs flex items-center gap-0.5" style={{ color: 'var(--accent-primary)' }}>
+            <span className="text-xs flex items-center gap-0.5 font-medium" style={{ color: 'var(--accent-primary)' }}>
               <ShieldCheck size={9} /> Admin
             </span>
           )}
         </div>
       </div>
 
-      {/* Nav section label */}
-      <p className="text-xs font-semibold uppercase tracking-widest px-2.5 mb-2"
-        style={{ color: 'var(--text-sidebar-muted)', opacity: 0.5, fontSize: '10px' }}>
-        {isAdmin ? 'Admin' : 'Workspace'}
+      {/* Section label */}
+      <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest"
+        style={{ color: 'var(--text-sidebar-muted)', fontSize: '10px', opacity: 0.6 }}>
+        {isAdmin ? 'Administration' : 'Navigation'}
       </p>
 
-      {/* Nav */}
+      {/* Nav links */}
       <nav className="flex-1 space-y-0.5">
         {nav.map(({ to, icon: Icon, label, end }) => (
           <NavLink
@@ -106,18 +109,42 @@ function SidebarContent({ nav, user, initials, logout, isAdmin }) {
             end={end}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
           >
-            <Icon size={15} strokeWidth={1.75} />
-            {label}
+            {({ isActive }) => (
+              <>
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-150"
+                  style={{
+                    backgroundColor: isActive ? 'rgba(37,99,235,0.12)' : 'transparent',
+                  }}
+                >
+                  <Icon
+                    size={15}
+                    strokeWidth={isActive ? 2.5 : 1.75}
+                    color={isActive ? 'var(--text-sidebar-active)' : 'currentColor'}
+                  />
+                </div>
+                {label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
       {/* User footer */}
-      <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center gap-2.5 px-2 mb-2">
+      <div
+        className="mt-4 pt-4 space-y-1"
+        style={{ borderTop: '1px solid var(--border-sidebar)' }}
+      >
+        <div
+          className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg mb-1"
+          style={{ backgroundColor: 'var(--bg-sidebar-hover)' }}
+        >
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-            style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: 'var(--text-sidebar)' }}
+            style={{
+              background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+              color: '#fff',
+            }}
           >
             {initials}
           </div>
@@ -125,17 +152,20 @@ function SidebarContent({ nav, user, initials, logout, isAdmin }) {
             <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-sidebar)' }}>
               {user?.name || user?.username || 'User'}
             </p>
-            <p className="text-xs truncate" style={{ color: 'var(--text-sidebar-muted)', fontSize: '11px' }}>
+            <p className="truncate" style={{ color: 'var(--text-sidebar-muted)', fontSize: '11px' }}>
               {user?.email || ''}
             </p>
           </div>
         </div>
+
         <button
           onClick={logout}
           className="sidebar-link w-full text-left"
-          style={{ color: '#f87171' }}
+          style={{ color: '#ef4444' }}
         >
-          <LogOut size={14} strokeWidth={1.75} />
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#fef2f2' }}>
+            <LogOut size={13} strokeWidth={2} color="#ef4444" />
+          </div>
           Sign out
         </button>
       </div>

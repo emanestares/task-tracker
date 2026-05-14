@@ -19,7 +19,7 @@ export default function AdminLayout() {
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Navbar onMenuClick={() => setSidebarOpen(true)} isAdmin />
-        <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
+        <main className="flex-1 overflow-y-auto px-5 sm:px-7 py-6">
           <div className="max-w-7xl mx-auto animate-fade-in">
             <Outlet />
           </div>

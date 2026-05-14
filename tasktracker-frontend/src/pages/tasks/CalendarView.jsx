@@ -4,9 +4,9 @@ import { TASK_STATUS, TASK_PRIORITY } from '../../constants'
 import { formatDate } from '../../utils'
 
 const PRIORITY_COLORS = {
-  HIGH: { dot: '#dc2626', bg: '#fef2f2', text: '#dc2626', border: '#fecaca' },
-  MEDIUM: { dot: '#d97706', bg: '#fffbeb', text: '#d97706', border: '#fde68a' },
-  LOW: { dot: '#16a34a', bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0' },
+  HIGH: { dot: '#ef4444', bg: '#fef2f2', text: '#ef4444', border: '#fecaca' },
+  MEDIUM: { dot: '#f59e0b', bg: '#fffbeb', text: '#f59e0b', border: '#fde68a' },
+  LOW: { dot: '#10b981', bg: '#f0fdf4', text: '#10b981', border: '#a7f3d0' },
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
