@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --ext js,jsx --fix",
     "format": "prettier --write src/",
     "preview": "vite preview",
-    "prepare": "husky"
+    "prepare": "cd .. && husky tasktracker-frontend/.husky"
   },
   "dependencies": {
     "axios": "^1.6.7",
