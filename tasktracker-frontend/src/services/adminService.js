@@ -86,6 +86,12 @@ const AdminService = {
     return data
   },
 
+  async toggleUserRole(id) {
+    const { data } = await apiClient.patch(`/api/admin/users/${id}/role`)
+    invalidateAdminCache('users', 'tasks')
+    return data
+  },
+
   async getStats(options = {}) {
     return fetchWithCache('stats', async () => {
       const { data } = await apiClient.get('/api/admin/stats')

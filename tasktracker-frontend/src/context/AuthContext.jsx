@@ -61,7 +61,7 @@ export function AuthProvider({ children }) {
       toast.success(`Welcome back, ${userData.name || userData.username || 'User'}!`)
 
       const role = userData.role || userData.roles?.[0]
-      navigate(role === 'ADMIN' ? ROUTES.ADMIN : ROUTES.DASHBOARD)
+      navigate(role === 'ADMIN' || role === 'SUPER_ADMIN' ? ROUTES.ADMIN : ROUTES.DASHBOARD)
     } catch (err) {
       const msg = err.response?.data?.message || ''
       const isInactive =
@@ -122,7 +122,8 @@ export function AuthProvider({ children }) {
     navigate(ROUTES.LOGIN)
   }, [navigate])
 
-  const isAdmin = user?.role === 'ADMIN' || user?.roles?.includes('ADMIN')
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.roles?.includes('SUPER_ADMIN')
+  const isAdmin = isSuperAdmin || user?.role === 'ADMIN' || user?.roles?.includes('ADMIN')
   const isAuthenticated = !!token && !!user
 
   return (
@@ -137,6 +138,7 @@ export function AuthProvider({ children }) {
       register,
       logout,
       updateProfile,
+      isSuperAdmin,
     }}>
       {children}
     </AuthContext.Provider>

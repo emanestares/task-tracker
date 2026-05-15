@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Trash2, Users, ShieldCheck, User, UserCheck, UserX, Loader2 } from 'lucide-react'
+import { Trash2, Users, ShieldCheck, User, UserCheck, UserX, BadgePlus, BadgeMinus, Loader2 } from 'lucide-react'
 import AdminService from '../../services/adminService'
 import PageHeader from '../../components/common/PageHeader'
 import SearchBar from '../../components/common/SearchBar'
@@ -11,13 +11,14 @@ import { getInitials, formatDate } from '../../utils'
 import toast from 'react-hot-toast'
 
 export default function AdminUsersPage() {
-  const { user: currentUser } = useAuth()
+  const { user: currentUser, isSuperAdmin } = useAuth()
   const [users, setUsers] = useState(() => AdminService.getCachedUsers() || [])
   const [loading, setLoading] = useState(() => !AdminService.getCachedUsers())
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [togglingId, setTogglingId] = useState(null)
+  const [roleUpdatingId, setRoleUpdatingId] = useState(null)
   const deleteDialog = useDisclosure()
 
   const loadUsers = async (forceRefresh = false) => {
@@ -82,6 +83,34 @@ export default function AdminUsersPage() {
       toast.error('Failed to update user status.')
     } finally {
       setTogglingId(null)
+    }
+  }
+
+  const handleToggleRole = async (user) => {
+    if (!isSuperAdmin) {
+      toast.error('Only a super admin can change user roles.')
+      return
+    }
+
+    if (user.username === currentUser?.username) {
+      toast.error("You can't change your own role.")
+      return
+    }
+
+    if (user.role === 'SUPER_ADMIN') {
+      toast.error('Super admin role cannot be changed.')
+      return
+    }
+
+      setRoleUpdatingId(user.id)
+      try {
+        await AdminService.toggleUserRole(user.id)
+        await loadUsers(true)
+        toast.success(`${user.name || user.username} role updated.`)
+    } catch {
+      toast.error('Failed to update user role.')
+    } finally {
+      setRoleUpdatingId(null)
     }
   }
 
@@ -153,6 +182,15 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-2">
+                          {isSuperAdmin && (
+                            <RoleToggle
+                              role={user.role}
+                              loading={roleUpdatingId === user.id}
+                              disabled={user.username === currentUser?.username || user.role === 'SUPER_ADMIN'}
+                              onToggle={() => handleToggleRole(user)}
+                              title={user.username === currentUser?.username ? "You can't change your own role" : user.role === 'ADMIN' ? 'Demote to user' : 'Promote to admin'}
+                            />
+                          )}
                           <ActiveToggle
                             isActive={user.isActive}
                             loading={togglingId === user.id}
@@ -160,19 +198,21 @@ export default function AdminUsersPage() {
                             onToggle={() => handleToggleActive(user)}
                             title={user.username === currentUser?.username ? "You can't deactivate yourself" : user.isActive ? 'Deactivate user' : 'Activate user'}
                           />
-                          <button
-                            onClick={() => handleDeleteClick(user)}
-                            disabled={user.username === currentUser?.username}
-                            className="p-1.5 rounded-lg transition-colors"
-                            style={{
-                              color: '#dc2626', backgroundColor: '#fef2f2',
-                              opacity: user.username === currentUser?.username ? 0.35 : 1,
-                              cursor: user.username === currentUser?.username ? 'not-allowed' : 'pointer',
-                            }}
-                            title={user.username === currentUser?.username ? "You can't delete yourself" : 'Delete user'}
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => handleDeleteClick(user)}
+                              disabled={user.username === currentUser?.username}
+                              className="p-1.5 rounded-lg transition-colors"
+                              style={{
+                                color: '#dc2626', backgroundColor: '#fef2f2',
+                                opacity: user.username === currentUser?.username ? 0.35 : 1,
+                                cursor: user.username === currentUser?.username ? 'not-allowed' : 'pointer',
+                              }}
+                              title={user.username === currentUser?.username ? "You can't delete yourself" : 'Delete user'}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -198,7 +238,15 @@ export default function AdminUsersPage() {
                       {user.email}
                     </p>
                   </div>
-                  <RoleBadge role={user.role} />
+                  {isSuperAdmin && (
+                    <RoleToggle
+                      role={user.role}
+                      loading={roleUpdatingId === user.id}
+                      disabled={user.username === currentUser?.username || user.role === 'SUPER_ADMIN'}
+                      onToggle={() => handleToggleRole(user)}
+                      title={user.username === currentUser?.username ? "You can't change your own role" : user.role === 'ADMIN' ? 'Demote to user' : 'Promote to admin'}
+                    />
+                  )}
                   <ActiveToggle
                     isActive={user.isActive}
                     loading={togglingId === user.id}
@@ -206,17 +254,19 @@ export default function AdminUsersPage() {
                     onToggle={() => handleToggleActive(user)}
                     title={user.username === currentUser?.username ? "You can't deactivate yourself" : user.isActive ? 'Deactivate' : 'Activate'}
                   />
-                  <button onClick={() => handleDeleteClick(user)}
-                    disabled={user.username === currentUser?.username}
-                    className="p-1.5 rounded-lg flex-shrink-0"
-                    style={{
-                      color: '#dc2626', backgroundColor: '#fef2f2',
-                      opacity: user.username === currentUser?.username ? 0.35 : 1,
-                      cursor: user.username === currentUser?.username ? 'not-allowed' : 'pointer',
-                    }}
-                    title={user.username === currentUser?.username ? "You can't delete yourself" : 'Delete user'}>
-                    <Trash2 size={13} />
-                  </button>
+                  {isSuperAdmin && (
+                    <button onClick={() => handleDeleteClick(user)}
+                      disabled={user.username === currentUser?.username}
+                      className="p-1.5 rounded-lg flex-shrink-0"
+                      style={{
+                        color: '#dc2626', backgroundColor: '#fef2f2',
+                        opacity: user.username === currentUser?.username ? 0.35 : 1,
+                        cursor: user.username === currentUser?.username ? 'not-allowed' : 'pointer',
+                      }}
+                      title={user.username === currentUser?.username ? "You can't delete yourself" : 'Delete user'}>
+                      <Trash2 size={13} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -238,15 +288,44 @@ export default function AdminUsersPage() {
 }
 
 function RoleBadge({ role }) {
+  const isSuperAdmin = role === 'SUPER_ADMIN'
   const isAdmin = role === 'ADMIN'
+  const label = isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : 'User'
   return (
     <span className="badge text-xs" style={{
-      backgroundColor: isAdmin ? 'var(--accent-muted)' : 'var(--bg-tertiary)',
-      color: isAdmin ? 'var(--accent-primary)' : 'var(--text-secondary)',
+      backgroundColor: isSuperAdmin ? '#fef3c7' : isAdmin ? 'var(--accent-muted)' : 'var(--bg-tertiary)',
+      color: isSuperAdmin ? '#92400e' : isAdmin ? 'var(--accent-primary)' : 'var(--text-secondary)',
     }}>
-      {isAdmin ? <ShieldCheck size={10} /> : <User size={10} />}
-      {role || 'USER'}
+      {isSuperAdmin ? <ShieldCheck size={10} /> : isAdmin ? <ShieldCheck size={10} /> : <User size={10} />}
+      {label}
     </span>
+  )
+}
+
+function RoleToggle({ role, loading, disabled, onToggle, title }) {
+  const isSuperAdmin = role === 'SUPER_ADMIN'
+  const isAdmin = role === 'ADMIN'
+
+  return (
+    <button
+      onClick={onToggle}
+      disabled={isSuperAdmin || disabled || loading}
+      title={title}
+      className="p-1.5 rounded-lg transition-colors"
+      style={{
+        color: isSuperAdmin ? '#a16207' : isAdmin ? '#b45309' : '#2563eb',
+        backgroundColor: isSuperAdmin ? '#fef9c3' : isAdmin ? '#fef3c7' : '#dbeafe',
+        opacity: (disabled || loading) ? 0.35 : 1,
+        cursor: (disabled || loading) ? 'not-allowed' : 'pointer',
+        border: 'none',
+        flexShrink: 0,
+      }}
+    >
+      {loading
+        ? <Loader2 size={13} style={{ animation: 'spin 0.6s linear infinite' }} />
+        : (role === 'ADMIN' || role === 'SUPER_ADMIN' ? <BadgeMinus size={13} /> : <BadgePlus size={13} />)
+      }
+    </button>
   )
 }
 

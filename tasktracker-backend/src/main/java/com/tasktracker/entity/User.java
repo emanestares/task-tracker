@@ -55,5 +55,5 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
-    public enum Role { USER, ADMIN }
+    public enum Role { USER, ADMIN, SUPER_ADMIN }
 }

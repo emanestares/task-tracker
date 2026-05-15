@@ -86,6 +86,24 @@ public class AdminService {
         return mapUserToResponse(userRepository.save(user));
     }
 
+    @Transactional
+    public AdminUserResponse toggleUserRole(Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+
+        if (user.getUsername().equals(currentUsername)) {
+            throw new IllegalArgumentException("You cannot change your own role.");
+        }
+
+        if (user.getRole() == User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Super admin role cannot be changed.");
+        }
+
+        user.setRole(user.getRole() == User.Role.ADMIN ? User.Role.USER : User.Role.ADMIN);
+        return mapUserToResponse(userRepository.save(user));
+    }
+
     private AdminUserResponse mapUserToResponse(User user) {
         return AdminUserResponse.builder()
                 .id(user.getId())

@@ -5,6 +5,7 @@ export const USER_KEY = 'tt_user'
 
 export const ROLES = {
   ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER_ADMIN',
   USER: 'USER',
 }
 
