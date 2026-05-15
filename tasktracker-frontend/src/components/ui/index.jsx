@@ -57,7 +57,7 @@ export function StatCard({ label, value, icon: Icon, loading, color = 'var(--acc
 // ── StatusBadge ───────────────────────────────────────────────────────────────
 export function StatusBadge({ status }) {
   const map = {
-    TODO:        { label: 'To Do',       cls: 'badge-todo',        dot: '#e9e918' },
+    TODO:        { label: 'To Do',       cls: 'badge-todo',        dot: '#99990e' },
     IN_PROGRESS: { label: 'In Progress', cls: 'badge-inprogress',  dot: '#2563eb' },
     DONE:        { label: 'Done',        cls: 'badge-done',        dot: '#10b981' },
     CANCELLED:   { label: 'Cancelled',   cls: 'badge-cancelled',   dot: '#ef4444' },

@@ -99,7 +99,7 @@
     --priority-low-bg: #061a0e;
     --priority-low-border: #064e3b;
 
-    --status-todo: #c4c416;
+    --status-todo: #99990e;
     --status-inprogress: #60a5fa;
     --status-done: #34d399;
     --status-cancelled: #f87171;
@@ -234,7 +234,7 @@
   }
   .badge-todo {
     background-color: var(--bg-todo);
-    color: #c4c416;
+    color: #99990e;
     border: 1px solid var(--border-todo);
   }
   .badge-inprogress {
