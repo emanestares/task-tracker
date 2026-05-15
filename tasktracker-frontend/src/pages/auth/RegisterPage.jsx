@@ -1,30 +1,35 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Eye, EyeOff, UserPlus } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
-import { ROUTES } from '../../constants'
-import { Spinner } from '../../components/ui/index.jsx'
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Eye, EyeOff, UserPlus } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { ROUTES } from '../../constants';
+import { Spinner } from '../../components/ui/index.jsx';
 
 export default function RegisterPage() {
-  const { register, loading } = useAuth()
-  const [form, setForm] = useState({ name: '', username: '', email: '', password: '', confirmPassword: '' })
-  const [showPwd, setShowPwd] = useState(false)
-  const [showConfirmPwd, setShowConfirmPwd] = useState(false)
-  const [errors, setErrors] = useState({})
+  const { register, loading } = useAuth();
+  const [form, setForm] = useState({
+    name: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const set = (k, v) => {
-    setForm((f) => ({ ...f, [k]: v }))
-    setErrors((e) => ({ ...e, [k]: undefined }))
-  }
+    setForm((f) => ({ ...f, [k]: v }));
+    setErrors((e) => ({ ...e, [k]: undefined }));
+  };
 
   const validate = () => {
     const errs = {};
 
-
     const name = form.name.trim();
     const username = form.username.trim();
     const email = form.email.trim();
-    const password = form.password; 
+    const password = form.password;
 
     if (!name) {
       errs.name = 'Full name is required.';
@@ -37,7 +42,7 @@ export default function RegisterPage() {
     } else if (/\s/.test(username)) {
       errs.username = 'Username cannot contain spaces.';
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
       errs.email = 'Email is required.';
@@ -45,7 +50,6 @@ export default function RegisterPage() {
       errs.email = 'Enter a valid email address (no spaces allowed).';
     }
 
-    
     if (!password) {
       errs.password = 'Password is required.';
     } else if (password.length < 6) {
@@ -60,20 +64,28 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
     try {
-      const payload = { ...form }
-      delete payload.confirmPassword
-      await register(payload)
-    } catch { /* handled by context */ }
-  }
+      const payload = { ...form };
+      delete payload.confirmPassword;
+      await register(payload);
+    } catch {
+      /* handled by context */
+    }
+  };
 
   return (
     <div className="animate-slide-up">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+        <h1
+          className="text-3xl font-bold mb-2"
+          style={{ color: 'var(--text-primary)' }}
+        >
           Create account
         </h1>
         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -94,7 +106,9 @@ export default function RegisterPage() {
             autoComplete="name"
             autoFocus
           />
-          {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+          {errors.name && (
+            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+          )}
         </div>
 
         {/* Username + Email row */}
@@ -109,7 +123,9 @@ export default function RegisterPage() {
               onChange={(e) => set('username', e.target.value)}
               autoComplete="username"
             />
-            {errors.username && <p className="text-xs text-red-500 mt-1">{errors.username}</p>}
+            {errors.username && (
+              <p className="text-xs text-red-500 mt-1">{errors.username}</p>
+            )}
           </div>
           <div>
             <label className="label">Email</label>
@@ -121,7 +137,9 @@ export default function RegisterPage() {
               onChange={(e) => set('email', e.target.value)}
               autoComplete="email"
             />
-            {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+            )}
           </div>
         </div>
 
@@ -146,7 +164,9 @@ export default function RegisterPage() {
               {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+          {errors.password && (
+            <p className="text-xs text-red-500 mt-1">{errors.password}</p>
+          )}
         </div>
 
         {/* Confirm password */}
@@ -170,22 +190,36 @@ export default function RegisterPage() {
               {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword}</p>}
+          {errors.confirmPassword && (
+            <p className="text-xs text-red-500 mt-1">
+              {errors.confirmPassword}
+            </p>
+          )}
         </div>
 
-        <button type="submit" className="btn-primary w-full mt-6" disabled={loading}>
+        <button
+          type="submit"
+          className="btn-primary w-full mt-6"
+          disabled={loading}
+        >
           {loading ? <Spinner size={16} /> : <UserPlus size={16} />}
           {loading ? 'Creating account…' : 'Create account'}
         </button>
       </form>
 
-      <p className="text-center text-sm mt-6" style={{ color: 'var(--text-secondary)' }}>
+      <p
+        className="text-center text-sm mt-6"
+        style={{ color: 'var(--text-secondary)' }}
+      >
         Already have an account?{' '}
-        <Link to={ROUTES.LOGIN} className="font-semibold hover:underline"
-          style={{ color: 'var(--accent-primary)' }}>
+        <Link
+          to={ROUTES.LOGIN}
+          className="font-semibold hover:underline"
+          style={{ color: 'var(--accent-primary)' }}
+        >
           Sign in
         </Link>
       </p>
     </div>
-  )
+  );
 }

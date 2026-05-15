@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { TASK_STATUS, TASK_PRIORITY } from '../../constants'
+import { useState } from 'react';
+import { TASK_STATUS, TASK_PRIORITY } from '../../constants';
 
 const DEFAULT = {
   title: '',
@@ -7,60 +7,67 @@ const DEFAULT = {
   status: TASK_STATUS.TODO,
   priority: TASK_PRIORITY.MEDIUM,
   dueDate: '',
-}
+};
 
-export default function TaskForm({ initial = {}, onSubmit, onCancel, loading }) {
-  const [form, setForm] = useState({ ...DEFAULT, ...initial })
-  const [errors, setErrors] = useState({})
+export default function TaskForm({
+  initial = {},
+  onSubmit,
+  onCancel,
+  loading,
+}) {
+  const [form, setForm] = useState({ ...DEFAULT, ...initial });
+  const [errors, setErrors] = useState({});
 
   const set = (key, value) => {
-    setForm((f) => ({ ...f, [key]: value }))
-    setErrors((e) => ({ ...e, [key]: undefined }))
-  }
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((e) => ({ ...e, [key]: undefined }));
+  };
 
   const validate = () => {
-    const errs = {}
-    if (!form.title.trim()) errs.title = 'Title is required.'
-    if (form.title.length > 120) errs.title = 'Title must be under 120 characters.'
-    if (form.description.length > 500) errs.description = 'Description must be under 500 characters.'
+    const errs = {};
+    if (!form.title.trim()) errs.title = 'Title is required.';
+    if (form.title.length > 120)
+      errs.title = 'Title must be under 120 characters.';
+    if (form.description.length > 500)
+      errs.description = 'Description must be under 500 characters.';
 
     if (!form.dueDate) {
-        errs.dueDate = 'Due date is required.'
-      } else {
-        // ✅ NEW: prevent past dates
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+      errs.dueDate = 'Due date is required.';
+    } else {
+      // ✅ NEW: prevent past dates
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-        const selectedDate = new Date(form.dueDate)
+      const selectedDate = new Date(form.dueDate);
 
-        if (selectedDate < today) {
-          errs.dueDate = 'Due date cannot be before today.'
-        }
+      if (selectedDate < today) {
+        errs.dueDate = 'Due date cannot be before today.';
       }
-    return errs
-  }
+    }
+    return errs;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const errs = validate()
+    const errs = validate();
 
     if (Object.keys(errs).length) {
-      setErrors(errs)
-      return
+      setErrors(errs);
+      return;
     }
 
     try {
-      setErrors({})
-      await onSubmit(form)
+      setErrors({});
+      await onSubmit(form);
     } catch (err) {
-      const backendErrors = err?.response?.data?.fields
+      const backendErrors = err?.response?.data?.fields;
 
       if (backendErrors) {
-        setErrors(backendErrors)
+        setErrors(backendErrors);
       }
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -75,7 +82,9 @@ export default function TaskForm({ initial = {}, onSubmit, onCancel, loading }) 
           onChange={(e) => set('title', e.target.value)}
           maxLength={120}
         />
-        {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
+        {errors.title && (
+          <p className="text-xs text-red-500 mt-1">{errors.title}</p>
+        )}
       </div>
 
       {/* Description */}
@@ -90,10 +99,11 @@ export default function TaskForm({ initial = {}, onSubmit, onCancel, loading }) 
           maxLength={500}
         />
         <div className="flex justify-between mt-1">
-          {errors.description
-            ? <p className="text-xs text-red-500">{errors.description}</p>
-            : <span />
-          }
+          {errors.description ? (
+            <p className="text-xs text-red-500">{errors.description}</p>
+          ) : (
+            <span />
+          )}
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
             {form.description.length}/500
           </p>
@@ -111,7 +121,9 @@ export default function TaskForm({ initial = {}, onSubmit, onCancel, loading }) 
           >
             {Object.entries(TASK_STATUS).map(([k, v]) => (
               <option key={k} value={v}>
-                {v === 'IN_PROGRESS' ? 'In Progress' : v.charAt(0) + v.slice(1).toLowerCase().replace('_', ' ')}
+                {v === 'IN_PROGRESS'
+                  ? 'In Progress'
+                  : v.charAt(0) + v.slice(1).toLowerCase().replace('_', ' ')}
               </option>
             ))}
           </select>
@@ -125,7 +137,9 @@ export default function TaskForm({ initial = {}, onSubmit, onCancel, loading }) 
             onChange={(e) => set('priority', e.target.value)}
           >
             {Object.entries(TASK_PRIORITY).map(([k, v]) => (
-              <option key={k} value={v}>{v.charAt(0) + v.slice(1).toLowerCase()}</option>
+              <option key={k} value={v}>
+                {v.charAt(0) + v.slice(1).toLowerCase()}
+              </option>
             ))}
           </select>
         </div>
@@ -140,14 +154,17 @@ export default function TaskForm({ initial = {}, onSubmit, onCancel, loading }) 
       />
 
       {errors.dueDate && (
-        <p className="text-xs text-red-500 mt-1">
-          {errors.dueDate}
-        </p>
+        <p className="text-xs text-red-500 mt-1">{errors.dueDate}</p>
       )}
 
       {/* Actions */}
       <div className="flex justify-end gap-3 pt-2">
-        <button type="button" className="btn-secondary" onClick={onCancel} disabled={loading}>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={onCancel}
+          disabled={loading}
+        >
           Cancel
         </button>
         <button type="submit" className="btn-primary" disabled={loading}>
@@ -155,5 +172,5 @@ export default function TaskForm({ initial = {}, onSubmit, onCancel, loading }) 
         </button>
       </div>
     </form>
-  )
+  );
 }

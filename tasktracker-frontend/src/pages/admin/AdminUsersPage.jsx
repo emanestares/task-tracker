@@ -1,118 +1,143 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Trash2, Users, ShieldCheck, User, UserCheck, UserX, BadgePlus, BadgeMinus, Loader2 } from 'lucide-react'
-import AdminService from '../../services/adminService'
-import PageHeader from '../../components/common/PageHeader'
-import SearchBar from '../../components/common/SearchBar'
-import ConfirmDialog from '../../components/ui/ConfirmDialog'
-import { EmptyState } from '../../components/ui/index.jsx'
-import { useDisclosure } from '../../hooks/index.js'
-import { useAuth } from '../../context/AuthContext'
-import { getInitials, formatDate } from '../../utils'
-import toast from 'react-hot-toast'
+import { useState, useEffect, useMemo } from 'react';
+import {
+  Trash2,
+  Users,
+  ShieldCheck,
+  User,
+  UserCheck,
+  UserX,
+  BadgePlus,
+  BadgeMinus,
+  Loader2,
+} from 'lucide-react';
+import AdminService from '../../services/adminService';
+import PageHeader from '../../components/common/PageHeader';
+import SearchBar from '../../components/common/SearchBar';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { EmptyState } from '../../components/ui/index.jsx';
+import { useDisclosure } from '../../hooks/index.js';
+import { useAuth } from '../../context/AuthContext';
+import { getInitials, formatDate } from '../../utils';
+import toast from 'react-hot-toast';
 
 export default function AdminUsersPage() {
-  const { user: currentUser, isSuperAdmin } = useAuth()
-  const [users, setUsers] = useState(() => AdminService.getCachedUsers() || [])
-  const [loading, setLoading] = useState(() => !AdminService.getCachedUsers())
-  const [search, setSearch] = useState('')
-  const [selectedUser, setSelectedUser] = useState(null)
-  const [deleteLoading, setDeleteLoading] = useState(false)
-  const [togglingId, setTogglingId] = useState(null)
-  const [roleUpdatingId, setRoleUpdatingId] = useState(null)
-  const deleteDialog = useDisclosure()
+  const { user: currentUser, isSuperAdmin } = useAuth();
+  const [users, setUsers] = useState(() => AdminService.getCachedUsers() || []);
+  const [loading, setLoading] = useState(() => !AdminService.getCachedUsers());
+  const [search, setSearch] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
+  const [roleUpdatingId, setRoleUpdatingId] = useState(null);
+  const deleteDialog = useDisclosure();
 
   const loadUsers = async (forceRefresh = false) => {
-    const hasCachedUsers = !!AdminService.getCachedUsers()
+    const hasCachedUsers = !!AdminService.getCachedUsers();
     try {
-      const data = await AdminService.getAllUsers({ forceRefresh })
-      setUsers(Array.isArray(data) ? data : [])
+      const data = await AdminService.getAllUsers({ forceRefresh });
+      setUsers(Array.isArray(data) ? data : []);
     } catch {
-      toast.error('Failed to load users.')
+      toast.error('Failed to load users.');
     } finally {
-      if (!hasCachedUsers) setLoading(false)
+      if (!hasCachedUsers) setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    const initialLoadId = setTimeout(() => { void loadUsers() }, 0)
-    const intervalId = setInterval(() => { void loadUsers() }, 15000)
-    return () => { clearTimeout(initialLoadId); clearInterval(intervalId) }
-  }, [])
+    const initialLoadId = setTimeout(() => {
+      void loadUsers();
+    }, 0);
+    const intervalId = setInterval(() => {
+      void loadUsers();
+    }, 15000);
+    return () => {
+      clearTimeout(initialLoadId);
+      clearInterval(intervalId);
+    };
+  }, []);
 
-  const filtered = useMemo(() =>
-    users.filter((u) =>
-      !search ||
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.username?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
-    ), [users, search])
+  const filtered = useMemo(
+    () =>
+      users.filter(
+        (u) =>
+          !search ||
+          u.name?.toLowerCase().includes(search.toLowerCase()) ||
+          u.username?.toLowerCase().includes(search.toLowerCase()) ||
+          u.email?.toLowerCase().includes(search.toLowerCase())
+      ),
+    [users, search]
+  );
 
   const handleDeleteClick = (user) => {
-    setSelectedUser(user)
-    deleteDialog.open()
-  }
+    setSelectedUser(user);
+    deleteDialog.open();
+  };
 
   const handleDeleteConfirm = async () => {
-    setDeleteLoading(true)
+    setDeleteLoading(true);
     try {
-      await AdminService.deleteUser(selectedUser.id)
-      setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id))
-      toast.success('User deleted.')
-      deleteDialog.close()
-      setSelectedUser(null)
+      await AdminService.deleteUser(selectedUser.id);
+      setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+      toast.success('User deleted.');
+      deleteDialog.close();
+      setSelectedUser(null);
     } catch {
-      toast.error('Failed to delete user.')
+      toast.error('Failed to delete user.');
     } finally {
-      setDeleteLoading(false)
+      setDeleteLoading(false);
     }
-  }
+  };
 
   const handleToggleActive = async (user) => {
     if (user.username === currentUser?.username) {
-      toast.error("You can't deactivate your own account.")
-      return
+      toast.error("You can't deactivate your own account.");
+      return;
     }
-    setTogglingId(user.id)
+    setTogglingId(user.id);
     try {
       const updated = user.isActive
         ? await AdminService.deactivateUser(user.id)
-        : await AdminService.activateUser(user.id)
-      setUsers((prev) => prev.map((u) => u.id === updated.id ? { ...u, ...updated } : u))
-      toast.success(`${updated.name || updated.username} is now ${updated.isActive ? 'active' : 'inactive'}.`)
+        : await AdminService.activateUser(user.id);
+      setUsers((prev) =>
+        prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u))
+      );
+      toast.success(
+        `${updated.name || updated.username} is now ${updated.isActive ? 'active' : 'inactive'}.`
+      );
     } catch {
-      toast.error('Failed to update user status.')
+      toast.error('Failed to update user status.');
     } finally {
-      setTogglingId(null)
+      setTogglingId(null);
     }
-  }
+  };
 
   const handleToggleRole = async (user) => {
     if (!isSuperAdmin) {
-      toast.error('Only a super admin can change user roles.')
-      return
+      toast.error('Only a super admin can change user roles.');
+      return;
     }
 
     if (user.username === currentUser?.username) {
-      toast.error("You can't change your own role.")
-      return
+      toast.error("You can't change your own role.");
+      return;
     }
 
     if (user.role === 'SUPER_ADMIN') {
-      toast.error('Super admin role cannot be changed.')
-      return
+      toast.error('Super admin role cannot be changed.');
+      return;
     }
 
-      setRoleUpdatingId(user.id)
-      try {
-        await AdminService.toggleUserRole(user.id)
-        await loadUsers(true)
-        toast.success(`${user.name || user.username} role updated.`)
+    setRoleUpdatingId(user.id);
+    try {
+      await AdminService.toggleUserRole(user.id);
+      await loadUsers(true);
+      toast.success(`${user.name || user.username} role updated.`);
     } catch {
-      toast.error('Failed to update user role.')
+      toast.error('Failed to update user role.');
     } finally {
-      setRoleUpdatingId(null)
+      setRoleUpdatingId(null);
     }
-  }
+  };
 
   return (
     <div>
@@ -122,7 +147,12 @@ export default function AdminUsersPage() {
       />
 
       <div className="mb-5">
-        <SearchBar value={search} onChange={setSearch} placeholder="Search by name, username, or email…" className="max-w-sm" />
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by name, username, or email…"
+          className="max-w-sm"
+        />
       </div>
 
       <div className="card overflow-hidden p-0">
@@ -134,7 +164,11 @@ export default function AdminUsersPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-6">
-            <EmptyState icon={Users} title="No users found" description="No users match your search." />
+            <EmptyState
+              icon={Users}
+              title="No users found"
+              description="No users match your search."
+            />
           </div>
         ) : (
           <>
@@ -142,33 +176,69 @@ export default function AdminUsersPage() {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border-primary)', borderBottom: '1px solid var(--border-primary)' }}>
-                    {['User', 'Email', 'Role', 'Status', 'Joined', 'Actions'].map((h) => (
-                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                        style={{ color: 'var(--text-secondary)' }}>{h}</th>
+                  <tr
+                    style={{
+                      backgroundColor: 'var(--bg-tertiary)',
+                      borderTop: '1px solid var(--border-primary)',
+                      borderBottom: '1px solid var(--border-primary)',
+                    }}
+                  >
+                    {[
+                      'User',
+                      'Email',
+                      'Role',
+                      'Status',
+                      'Joined',
+                      'Actions',
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((user) => (
-                    <tr key={user.id} className="table-row" style={{ opacity: user.isActive === false ? 0.6 : 1 }}>
+                    <tr
+                      key={user.id}
+                      className="table-row"
+                      style={{ opacity: user.isActive === false ? 0.6 : 1 }}
+                    >
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                            style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-primary)' }}>
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                            style={{
+                              backgroundColor: 'var(--accent-muted)',
+                              color: 'var(--accent-primary)',
+                            }}
+                          >
                             {getInitials(user.name || user.username || 'U')}
                           </div>
                           <div>
-                            <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                            <p
+                              className="font-medium"
+                              style={{ color: 'var(--text-primary)' }}
+                            >
                               {user.name || '—'}
                             </p>
-                            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                            <p
+                              className="text-xs"
+                              style={{ color: 'var(--text-muted)' }}
+                            >
                               @{user.username}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-3.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      <td
+                        className="px-6 py-3.5 text-xs"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
                         {user.email || '—'}
                       </td>
                       <td className="px-6 py-3.5">
@@ -177,7 +247,10 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-3.5">
                         <StatusBadge isActive={user.isActive} />
                       </td>
-                      <td className="px-6 py-3.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      <td
+                        className="px-6 py-3.5 text-xs"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
                         {formatDate(user.createdAt || user.created_at)}
                       </td>
                       <td className="px-6 py-3.5">
@@ -186,9 +259,18 @@ export default function AdminUsersPage() {
                             <RoleToggle
                               role={user.role}
                               loading={roleUpdatingId === user.id}
-                              disabled={user.username === currentUser?.username || user.role === 'SUPER_ADMIN'}
+                              disabled={
+                                user.username === currentUser?.username ||
+                                user.role === 'SUPER_ADMIN'
+                              }
                               onToggle={() => handleToggleRole(user)}
-                              title={user.username === currentUser?.username ? "You can't change your own role" : user.role === 'ADMIN' ? 'Demote to user' : 'Promote to admin'}
+                              title={
+                                user.username === currentUser?.username
+                                  ? "You can't change your own role"
+                                  : user.role === 'ADMIN'
+                                    ? 'Demote to user'
+                                    : 'Promote to admin'
+                              }
                             />
                           )}
                           <ActiveToggle
@@ -196,7 +278,13 @@ export default function AdminUsersPage() {
                             loading={togglingId === user.id}
                             disabled={user.username === currentUser?.username}
                             onToggle={() => handleToggleActive(user)}
-                            title={user.username === currentUser?.username ? "You can't deactivate yourself" : user.isActive ? 'Deactivate user' : 'Activate user'}
+                            title={
+                              user.username === currentUser?.username
+                                ? "You can't deactivate yourself"
+                                : user.isActive
+                                  ? 'Deactivate user'
+                                  : 'Activate user'
+                            }
                           />
                           {isSuperAdmin && (
                             <button
@@ -204,11 +292,22 @@ export default function AdminUsersPage() {
                               disabled={user.username === currentUser?.username}
                               className="p-1.5 rounded-lg transition-colors"
                               style={{
-                                color: '#dc2626', backgroundColor: '#fef2f2',
-                                opacity: user.username === currentUser?.username ? 0.35 : 1,
-                                cursor: user.username === currentUser?.username ? 'not-allowed' : 'pointer',
+                                color: '#dc2626',
+                                backgroundColor: '#fef2f2',
+                                opacity:
+                                  user.username === currentUser?.username
+                                    ? 0.35
+                                    : 1,
+                                cursor:
+                                  user.username === currentUser?.username
+                                    ? 'not-allowed'
+                                    : 'pointer',
                               }}
-                              title={user.username === currentUser?.username ? "You can't delete yourself" : 'Delete user'}
+                              title={
+                                user.username === currentUser?.username
+                                  ? "You can't delete yourself"
+                                  : 'Delete user'
+                              }
                             >
                               <Trash2 size={13} />
                             </button>
@@ -224,17 +323,34 @@ export default function AdminUsersPage() {
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
               {filtered.map((user) => (
-                <div key={user.id} className="flex items-center gap-3 py-3 px-4"
-                  style={{ borderBottom: '1px solid var(--border-primary)', opacity: user.isActive === false ? 0.6 : 1 }}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                    style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-primary)' }}>
+                <div
+                  key={user.id}
+                  className="flex items-center gap-3 py-3 px-4"
+                  style={{
+                    borderBottom: '1px solid var(--border-primary)',
+                    opacity: user.isActive === false ? 0.6 : 1,
+                  }}
+                >
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                    style={{
+                      backgroundColor: 'var(--accent-muted)',
+                      color: 'var(--accent-primary)',
+                    }}
+                  >
                     {getInitials(user.name || user.username || 'U')}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                    <p
+                      className="text-sm font-semibold truncate"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
                       {user.name || user.username}
                     </p>
-                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                    <p
+                      className="text-xs truncate"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
                       {user.email}
                     </p>
                   </div>
@@ -242,9 +358,18 @@ export default function AdminUsersPage() {
                     <RoleToggle
                       role={user.role}
                       loading={roleUpdatingId === user.id}
-                      disabled={user.username === currentUser?.username || user.role === 'SUPER_ADMIN'}
+                      disabled={
+                        user.username === currentUser?.username ||
+                        user.role === 'SUPER_ADMIN'
+                      }
                       onToggle={() => handleToggleRole(user)}
-                      title={user.username === currentUser?.username ? "You can't change your own role" : user.role === 'ADMIN' ? 'Demote to user' : 'Promote to admin'}
+                      title={
+                        user.username === currentUser?.username
+                          ? "You can't change your own role"
+                          : user.role === 'ADMIN'
+                            ? 'Demote to user'
+                            : 'Promote to admin'
+                      }
                     />
                   )}
                   <ActiveToggle
@@ -252,18 +377,35 @@ export default function AdminUsersPage() {
                     loading={togglingId === user.id}
                     disabled={user.username === currentUser?.username}
                     onToggle={() => handleToggleActive(user)}
-                    title={user.username === currentUser?.username ? "You can't deactivate yourself" : user.isActive ? 'Deactivate' : 'Activate'}
+                    title={
+                      user.username === currentUser?.username
+                        ? "You can't deactivate yourself"
+                        : user.isActive
+                          ? 'Deactivate'
+                          : 'Activate'
+                    }
                   />
                   {isSuperAdmin && (
-                    <button onClick={() => handleDeleteClick(user)}
+                    <button
+                      onClick={() => handleDeleteClick(user)}
                       disabled={user.username === currentUser?.username}
                       className="p-1.5 rounded-lg flex-shrink-0"
                       style={{
-                        color: '#dc2626', backgroundColor: '#fef2f2',
-                        opacity: user.username === currentUser?.username ? 0.35 : 1,
-                        cursor: user.username === currentUser?.username ? 'not-allowed' : 'pointer',
+                        color: '#dc2626',
+                        backgroundColor: '#fef2f2',
+                        opacity:
+                          user.username === currentUser?.username ? 0.35 : 1,
+                        cursor:
+                          user.username === currentUser?.username
+                            ? 'not-allowed'
+                            : 'pointer',
                       }}
-                      title={user.username === currentUser?.username ? "You can't delete yourself" : 'Delete user'}>
+                      title={
+                        user.username === currentUser?.username
+                          ? "You can't delete yourself"
+                          : 'Delete user'
+                      }
+                    >
                       <Trash2 size={13} />
                     </button>
                   )}
@@ -284,27 +426,44 @@ export default function AdminUsersPage() {
         confirmLabel="Delete User"
       />
     </div>
-  )
+  );
 }
 
 function RoleBadge({ role }) {
-  const isSuperAdmin = role === 'SUPER_ADMIN'
-  const isAdmin = role === 'ADMIN'
-  const label = isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : 'User'
+  const isSuperAdmin = role === 'SUPER_ADMIN';
+  const isAdmin = role === 'ADMIN';
+  const label = isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : 'User';
   return (
-    <span className="badge text-xs" style={{
-      backgroundColor: isSuperAdmin ? '#fef3c7' : isAdmin ? 'var(--accent-muted)' : 'var(--bg-tertiary)',
-      color: isSuperAdmin ? '#92400e' : isAdmin ? 'var(--accent-primary)' : 'var(--text-secondary)',
-    }}>
-      {isSuperAdmin ? <ShieldCheck size={10} /> : isAdmin ? <ShieldCheck size={10} /> : <User size={10} />}
+    <span
+      className="badge text-xs"
+      style={{
+        backgroundColor: isSuperAdmin
+          ? '#fef3c7'
+          : isAdmin
+            ? 'var(--accent-muted)'
+            : 'var(--bg-tertiary)',
+        color: isSuperAdmin
+          ? '#92400e'
+          : isAdmin
+            ? 'var(--accent-primary)'
+            : 'var(--text-secondary)',
+      }}
+    >
+      {isSuperAdmin ? (
+        <ShieldCheck size={10} />
+      ) : isAdmin ? (
+        <ShieldCheck size={10} />
+      ) : (
+        <User size={10} />
+      )}
       {label}
     </span>
-  )
+  );
 }
 
 function RoleToggle({ role, loading, disabled, onToggle, title }) {
-  const isSuperAdmin = role === 'SUPER_ADMIN'
-  const isAdmin = role === 'ADMIN'
+  const isSuperAdmin = role === 'SUPER_ADMIN';
+  const isAdmin = role === 'ADMIN';
 
   return (
     <button
@@ -314,40 +473,55 @@ function RoleToggle({ role, loading, disabled, onToggle, title }) {
       className="p-1.5 rounded-lg transition-colors"
       style={{
         color: isSuperAdmin ? '#a16207' : isAdmin ? '#b45309' : '#2563eb',
-        backgroundColor: isSuperAdmin ? '#fef9c3' : isAdmin ? '#fef3c7' : '#dbeafe',
-        opacity: (disabled || loading) ? 0.35 : 1,
-        cursor: (disabled || loading) ? 'not-allowed' : 'pointer',
+        backgroundColor: isSuperAdmin
+          ? '#fef9c3'
+          : isAdmin
+            ? '#fef3c7'
+            : '#dbeafe',
+        opacity: disabled || loading ? 0.35 : 1,
+        cursor: disabled || loading ? 'not-allowed' : 'pointer',
         border: 'none',
         flexShrink: 0,
       }}
     >
-      {loading
-        ? <Loader2 size={13} style={{ animation: 'spin 0.6s linear infinite' }} />
-        : (role === 'ADMIN' || role === 'SUPER_ADMIN' ? <BadgeMinus size={13} /> : <BadgePlus size={13} />)
-      }
+      {loading ? (
+        <Loader2 size={13} style={{ animation: 'spin 0.6s linear infinite' }} />
+      ) : role === 'ADMIN' || role === 'SUPER_ADMIN' ? (
+        <BadgeMinus size={13} />
+      ) : (
+        <BadgePlus size={13} />
+      )}
     </button>
-  )
+  );
 }
 
 function StatusBadge({ isActive }) {
-  const active = isActive !== false
+  const active = isActive !== false;
   return (
-    <span className="badge text-xs" style={{
-      backgroundColor: active ? '#dcfce7' : '#fef3c7',
-      color: active ? '#15803d' : '#92400e',
-    }}>
-      <span style={{
-        width: 6, height: 6, borderRadius: '50%',
-        backgroundColor: active ? '#16a34a' : '#d97706',
-        display: 'inline-block', flexShrink: 0,
-      }} />
+    <span
+      className="badge text-xs"
+      style={{
+        backgroundColor: active ? '#dcfce7' : '#fef3c7',
+        color: active ? '#15803d' : '#92400e',
+      }}
+    >
+      <span
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          backgroundColor: active ? '#16a34a' : '#d97706',
+          display: 'inline-block',
+          flexShrink: 0,
+        }}
+      />
       {active ? 'Active' : 'Inactive'}
     </span>
-  )
+  );
 }
 
 function ActiveToggle({ isActive, loading, disabled, onToggle, title }) {
-  const active = isActive !== false
+  const active = isActive !== false;
   return (
     <button
       onClick={onToggle}
@@ -363,12 +537,13 @@ function ActiveToggle({ isActive, loading, disabled, onToggle, title }) {
         flexShrink: 0,
       }}
     >
-      {loading
-        ? <Loader2 size={13} style={{ animation: 'spin 0.6s linear infinite' }} />
-        : active
-          ? <UserCheck size={13} />
-          : <UserX size={13} />
-      }
+      {loading ? (
+        <Loader2 size={13} style={{ animation: 'spin 0.6s linear infinite' }} />
+      ) : active ? (
+        <UserCheck size={13} />
+      ) : (
+        <UserX size={13} />
+      )}
     </button>
-  )
+  );
 }

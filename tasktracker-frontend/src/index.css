@@ -104,13 +104,16 @@
     --status-done: #34d399;
     --status-cancelled: #f87171;
 
-
     /*To do colors*/
     --bg-todo: #1b1b06;
     --border-todo: #414107;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
   html {
     font-family: 'Inter', system-ui, sans-serif;
@@ -126,13 +129,20 @@
     line-height: 1.6;
   }
 
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border-secondary); border-radius: 99px; }
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-secondary);
+    border-radius: 99px;
+  }
 }
 
 @layer components {
-
   /* ── Buttons ───────────────────────────────────────── */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold
@@ -140,14 +150,19 @@
            disabled:opacity-50 disabled:cursor-not-allowed;
     background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     color: #fff;
-    box-shadow: 0 1px 3px rgba(37,99,235,0.3), 0 1px 2px rgba(37,99,235,0.2);
+    box-shadow:
+      0 1px 3px rgba(37, 99, 235, 0.3),
+      0 1px 2px rgba(37, 99, 235, 0.2);
   }
   .btn-primary:hover:not(:disabled) {
     background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-    box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
     transform: translateY(-1px);
   }
-  .btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+  }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold
@@ -156,7 +171,7 @@
     background-color: var(--bg-secondary);
     color: var(--text-primary);
     border: 1.5px solid var(--border-primary);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
   .btn-secondary:hover:not(:disabled) {
     background-color: var(--bg-tertiary);
@@ -183,7 +198,10 @@
     color: var(--priority-high);
     border: 1.5px solid var(--priority-high-border);
   }
-  .btn-danger:hover:not(:disabled) { filter: brightness(0.95); transform: translateY(-1px); }
+  .btn-danger:hover:not(:disabled) {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+  }
 
   /* ── Cards ─────────────────────────────────────────── */
   .card {
@@ -191,10 +209,14 @@
     background-color: var(--bg-card);
     border: 1px solid var(--border-primary);
     padding: 1.25rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 1px 2px rgba(0, 0, 0, 0.03);
   }
   .card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.07),
+      0 2px 4px rgba(0, 0, 0, 0.04);
   }
   .card-flat {
     @apply rounded-xl;
@@ -214,11 +236,11 @@
   }
   .input-field:focus {
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
   }
   .input-field.error {
     border-color: var(--priority-high);
-    box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
   }
 
   .label {
@@ -247,13 +269,17 @@
     color: #059669;
     border: 1px solid var(--priority-low-border);
   }
-  .dark .badge-done { color: #34d399; }
+  .dark .badge-done {
+    color: #34d399;
+  }
   .badge-cancelled {
     background-color: var(--priority-high-bg);
     color: #ef4444;
     border: 1px solid var(--priority-high-border);
   }
-  .dark .badge-cancelled { color: #f87171; }
+  .dark .badge-cancelled {
+    color: #f87171;
+  }
 
   /* ── Sidebar ────────────────────────────────────────── */
   .sidebar-link {
@@ -274,7 +300,12 @@
   /* ── Skeleton ───────────────────────────────────────── */
   .skeleton {
     @apply rounded-lg animate-pulse;
-    background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--border-primary) 50%, var(--bg-tertiary) 75%);
+    background: linear-gradient(
+      90deg,
+      var(--bg-tertiary) 25%,
+      var(--border-primary) 50%,
+      var(--bg-tertiary) 75%
+    );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
@@ -284,27 +315,62 @@
     transition: background-color 0.15s;
     border-bottom: 1px solid var(--border-primary);
   }
-  .table-row:last-child { border-bottom: none; }
-  .table-row:hover { background-color: var(--bg-primary); }
+  .table-row:last-child {
+    border-bottom: none;
+  }
+  .table-row:hover {
+    background-color: var(--bg-primary);
+  }
 }
 
 @layer utilities {
-  .text-balance { text-wrap: balance; }
-  .animate-fade-in { animation: fadeIn 0.25s ease forwards; }
-  .animate-slide-up { animation: slideUp 0.2s cubic-bezier(0.16,1,0.3,1) forwards; }
-  .animate-scale-in { animation: scaleIn 0.2s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.25s ease forwards;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
   @keyframes slideUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to   { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
   @keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
 }

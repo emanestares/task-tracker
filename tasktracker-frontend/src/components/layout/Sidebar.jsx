@@ -1,28 +1,39 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, CheckSquare, Users, ListChecks,
-  Settings, X, ShieldCheck, LogOut, Zap,
-} from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
-import { ROUTES } from '../../constants'
+  LayoutDashboard,
+  CheckSquare,
+  Users,
+  ListChecks,
+  Settings,
+  X,
+  ShieldCheck,
+  LogOut,
+  Zap,
+} from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { ROUTES } from '../../constants';
 
 const userNav = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
   { to: ROUTES.TASKS, icon: CheckSquare, label: 'My Tasks' },
   { to: ROUTES.PROFILE, icon: Settings, label: 'Settings' },
-]
+];
 
 const adminNav = [
   { to: ROUTES.ADMIN, icon: LayoutDashboard, label: 'Overview', end: true },
   { to: ROUTES.ADMIN_USERS, icon: Users, label: 'Users' },
   { to: ROUTES.ADMIN_TASKS, icon: ListChecks, label: 'All Tasks' },
-]
+];
 
 export default function Sidebar({ open, onClose, isAdmin }) {
-  const { user, logout } = useAuth()
-  const nav = isAdmin ? adminNav : userNav
+  const { user, logout } = useAuth();
+  const nav = isAdmin ? adminNav : userNav;
   const initials = (user?.name || user?.username || 'U')
-    .split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <>
@@ -35,12 +46,21 @@ export default function Sidebar({ open, onClose, isAdmin }) {
           borderRight: '1px solid var(--border-sidebar)',
         }}
       >
-        <SidebarContent nav={nav} user={user} initials={initials} logout={logout} isAdmin={isAdmin} />
+        <SidebarContent
+          nav={nav}
+          user={user}
+          initials={initials}
+          logout={logout}
+          isAdmin={isAdmin}
+        />
       </aside>
 
       {/* Mobile backdrop */}
       {open && (
-        <div className="fixed inset-0 z-20 bg-black/30 backdrop-blur-sm lg:hidden" onClick={onClose} />
+        <div
+          className="fixed inset-0 z-20 bg-black/30 backdrop-blur-sm lg:hidden"
+          onClick={onClose}
+        />
       )}
 
       {/* Mobile drawer */}
@@ -59,10 +79,16 @@ export default function Sidebar({ open, onClose, isAdmin }) {
         >
           <X size={16} />
         </button>
-        <SidebarContent nav={nav} user={user} initials={initials} logout={logout} isAdmin={isAdmin} />
+        <SidebarContent
+          nav={nav}
+          user={user}
+          initials={initials}
+          logout={logout}
+          isAdmin={isAdmin}
+        />
       </aside>
     </>
-  )
+  );
 }
 
 function SidebarContent({ nav, user, initials, logout, isAdmin }) {
@@ -82,12 +108,19 @@ function SidebarContent({ nav, user, initials, logout, isAdmin }) {
         <div>
           <span
             className="font-bold text-sm block leading-tight"
-            style={{ color: 'var(--text-sidebar)', fontFamily: 'Inter Tight, Inter, sans-serif', letterSpacing: '-0.02em' }}
+            style={{
+              color: 'var(--text-sidebar)',
+              fontFamily: 'Inter Tight, Inter, sans-serif',
+              letterSpacing: '-0.02em',
+            }}
           >
             TaskFlow
           </span>
           {isAdmin && (
-            <span className="text-xs flex items-center gap-0.5 font-medium" style={{ color: 'var(--accent-primary)' }}>
+            <span
+              className="text-xs flex items-center gap-0.5 font-medium"
+              style={{ color: 'var(--accent-primary)' }}
+            >
               <ShieldCheck size={9} /> Admin
             </span>
           )}
@@ -95,8 +128,14 @@ function SidebarContent({ nav, user, initials, logout, isAdmin }) {
       </div>
 
       {/* Section label */}
-      <p className="px-3 mb-2 text-xs font-bold uppercase tracking-widest"
-        style={{ color: 'var(--text-sidebar-muted)', fontSize: '10px', opacity: 0.6 }}>
+      <p
+        className="px-3 mb-2 text-xs font-bold uppercase tracking-widest"
+        style={{
+          color: 'var(--text-sidebar-muted)',
+          fontSize: '10px',
+          opacity: 0.6,
+        }}
+      >
         {isAdmin ? 'Administration' : 'Navigation'}
       </p>
 
@@ -107,20 +146,26 @@ function SidebarContent({ nav, user, initials, logout, isAdmin }) {
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+            className={({ isActive }) =>
+              `sidebar-link ${isActive ? 'active' : ''}`
+            }
           >
             {({ isActive }) => (
               <>
                 <div
                   className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-150"
                   style={{
-                    backgroundColor: isActive ? 'rgba(37,99,235,0.12)' : 'transparent',
+                    backgroundColor: isActive
+                      ? 'rgba(37,99,235,0.12)'
+                      : 'transparent',
                   }}
                 >
                   <Icon
                     size={15}
                     strokeWidth={isActive ? 2.5 : 1.75}
-                    color={isActive ? 'var(--text-sidebar-active)' : 'currentColor'}
+                    color={
+                      isActive ? 'var(--text-sidebar-active)' : 'currentColor'
+                    }
                   />
                 </div>
                 {label}
@@ -149,10 +194,16 @@ function SidebarContent({ nav, user, initials, logout, isAdmin }) {
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-sidebar)' }}>
+            <p
+              className="text-xs font-semibold truncate"
+              style={{ color: 'var(--text-sidebar)' }}
+            >
               {user?.name || user?.username || 'User'}
             </p>
-            <p className="truncate" style={{ color: 'var(--text-sidebar-muted)', fontSize: '11px' }}>
+            <p
+              className="truncate"
+              style={{ color: 'var(--text-sidebar-muted)', fontSize: '11px' }}
+            >
               {user?.email || ''}
             </p>
           </div>
@@ -163,12 +214,15 @@ function SidebarContent({ nav, user, initials, logout, isAdmin }) {
           className="sidebar-link w-full text-left"
           style={{ color: '#ef4444' }}
         >
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#fef2f2' }}>
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: '#fef2f2' }}
+          >
             <LogOut size={13} strokeWidth={2} color="#ef4444" />
           </div>
           Sign out
         </button>
       </div>
     </div>
-  )
+  );
 }

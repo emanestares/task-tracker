@@ -1,6 +1,11 @@
-import { Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react';
 
-export default function SearchBar({ value, onChange, placeholder = 'Search…', className = '' }) {
+export default function SearchBar({
+  value,
+  onChange,
+  placeholder = 'Search…',
+  className = '',
+}) {
   return (
     <div className={`relative ${className}`}>
       <Search
@@ -25,5 +30,5 @@ export default function SearchBar({ value, onChange, placeholder = 'Search…', 
         </button>
       )}
     </div>
-  )
+  );
 }

@@ -1,11 +1,11 @@
-import { Menu, Sun, Moon } from 'lucide-react'
-import { useTheme } from '../../context/useTheme'
-import { useAuth } from '../../context/AuthContext'
-import { getInitials } from '../../utils'
+import { Menu, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../context/useTheme';
+import { useAuth } from '../../context/AuthContext';
+import { getInitials } from '../../utils';
 
 export default function Navbar({ onMenuClick, isAdmin }) {
-  const { isDark, toggle } = useTheme()
-  const { user } = useAuth()
+  const { isDark, toggle } = useTheme();
+  const { user } = useAuth();
 
   return (
     <header
@@ -42,13 +42,17 @@ export default function Navbar({ onMenuClick, isAdmin }) {
           className="btn-ghost p-2 rounded-lg"
           title={isDark ? 'Light mode' : 'Dark mode'}
         >
-          {isDark
-            ? <Sun size={16} strokeWidth={1.75} />
-            : <Moon size={16} strokeWidth={1.75} />
-          }
+          {isDark ? (
+            <Sun size={16} strokeWidth={1.75} />
+          ) : (
+            <Moon size={16} strokeWidth={1.75} />
+          )}
         </button>
 
-        <div className="w-px h-5 mx-1" style={{ backgroundColor: 'var(--border-primary)' }} />
+        <div
+          className="w-px h-5 mx-1"
+          style={{ backgroundColor: 'var(--border-primary)' }}
+        />
 
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer select-none"
@@ -63,5 +67,5 @@ export default function Navbar({ onMenuClick, isAdmin }) {
         </div>
       </div>
     </header>
-  )
+  );
 }

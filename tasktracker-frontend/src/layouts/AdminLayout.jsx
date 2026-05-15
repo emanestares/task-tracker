@@ -1,14 +1,21 @@
-import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
-import Sidebar from '../components/layout/Sidebar'
-import Navbar from '../components/layout/Navbar'
+import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import Sidebar from '../components/layout/Sidebar';
+import Navbar from '../components/layout/Navbar';
 
 export default function AdminLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} isAdmin={true} />
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{ backgroundColor: 'var(--bg-primary)' }}
+    >
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        isAdmin={true}
+      />
 
       {sidebarOpen && (
         <div
@@ -26,5 +33,5 @@ export default function AdminLayout() {
         </main>
       </div>
     </div>
-  )
+  );
 }
