@@ -1,4 +1,4 @@
-package com.tasktracker;
+package com.tasktracker.service;
 
 import com.tasktracker.dto.TaskRequest;
 import com.tasktracker.dto.TaskResponse;
@@ -7,7 +7,6 @@ import com.tasktracker.entity.User;
 import com.tasktracker.exception.TaskNotFoundException;
 import com.tasktracker.repository.TaskRepository;
 import com.tasktracker.repository.UserRepository;
-import com.tasktracker.service.TaskService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
