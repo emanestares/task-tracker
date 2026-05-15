@@ -1,5 +1,5 @@
-import { Menu, Sun, Moon, Bell } from 'lucide-react'
-import { useTheme } from '../../context/ThemeContext'
+import { Menu, Sun, Moon } from 'lucide-react'
+import { useTheme } from '../../context/useTheme'
 import { useAuth } from '../../context/AuthContext'
 import { getInitials } from '../../utils'
 

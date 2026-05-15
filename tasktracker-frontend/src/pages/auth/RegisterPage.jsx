@@ -64,7 +64,8 @@ export default function RegisterPage() {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     try {
-      const { confirmPassword, ...payload } = form
+      const payload = { ...form }
+      delete payload.confirmPassword
       await register(payload)
     } catch { /* handled by context */ }
   }

@@ -6,7 +6,7 @@ import { useTasks } from '../../hooks/index.js'
 import PageHeader from '../../components/common/PageHeader'
 import { StatusBadge, EmptyState } from '../../components/ui/index.jsx'
 import { ROUTES, TASK_STATUS, TASK_PRIORITY } from '../../constants'
-import { formatDate, timeAgo, truncate } from '../../utils'
+import { formatDate, timeAgo } from '../../utils'
 
 function DonutChart({ done, inProgress, todo, total }) {
   const size = 140

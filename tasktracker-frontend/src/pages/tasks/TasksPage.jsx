@@ -31,7 +31,7 @@ function PriorityBadge({ priority }) {
 /* ══════════════════════════════════════════════════════════════
    DONUT CHART — matches dashboard style
 ══════════════════════════════════════════════════════════════ */
-function DonutChart({ segments, total, centerLabel }) {
+function DonutChart({ segments, total }) {
   const size = 148
   const strokeWidth = 14
   const gap = 2
@@ -39,16 +39,16 @@ function DonutChart({ segments, total, centerLabel }) {
   const circumference = 2 * Math.PI * radius
   const cx = size / 2, cy = size / 2
 
-  let offset = 0
   const gapAngle = total > 0 ? gap / circumference : 0
-  const arcs = segments.map((seg) => {
+  const arcs = segments.reduce((acc, seg) => {
     const pct = total > 0 ? seg.value / total : 0
     const adjustedPct = Math.max(0, pct - gapAngle)
     const dash = adjustedPct * circumference
-    const arc = { ...seg, dashArray: `${dash} ${circumference - dash}`, dashOffset: -offset * circumference }
-    offset += pct
-    return arc
-  })
+    const previous = acc.offset
+    acc.arcs.push({ ...seg, dashArray: `${dash} ${circumference - dash}`, dashOffset: -previous * circumference })
+    acc.offset += pct
+    return acc
+  }, { arcs: [], offset: 0 }).arcs
 
   const donePct = total > 0 ? Math.round(((segments.find(s => s.key === 'DONE')?.value || 0) / total) * 100) : 0
 
@@ -294,7 +294,7 @@ export default function TasksPage() {
   const [statusFilter,   setStatusFilter]   = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
   const [sortBy,         setSortBy]         = useState('priority')
-  const [sortDir,        setSortDir]        = useState('asc')   // ← asc / desc toggle
+  const [sortDir,        setSortDir]        = useState('asc')
   const [page, setPage] = useState(1)
   const [view, setView] = useState('list')
 
@@ -308,18 +308,20 @@ export default function TasksPage() {
       return ms && mv && mp
     })
 
+    const direction = sortDir === 'asc' ? 1 : -1
     r = [...r].sort((a, b) => {
-      let cmp = 0
-      if (sortBy === 'priority') cmp = (PRIORITY_ORDER[a.priority] ?? 2) - (PRIORITY_ORDER[b.priority] ?? 2)
-      else if (sortBy === 'dueDate') {
-        if (!a.dueDate && !b.dueDate) cmp = 0
-        else if (!a.dueDate) cmp = 1
-        else if (!b.dueDate) cmp = -1
-        else cmp = new Date(a.dueDate) - new Date(b.dueDate)
-      } else {
-        cmp = new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+      if (sortBy === 'priority') {
+        return direction * ((PRIORITY_ORDER[a.priority] ?? 2) - (PRIORITY_ORDER[b.priority] ?? 2))
       }
-      return sortDir === 'asc' ? cmp : -cmp
+
+      if (sortBy === 'dueDate') {
+        if (!a.dueDate && !b.dueDate) return 0
+        if (!a.dueDate) return 1 * direction
+        if (!b.dueDate) return -1 * direction
+        return direction * (new Date(a.dueDate) - new Date(b.dueDate))
+      }
+
+      return direction * (new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     })
     return r
   }, [tasks, debouncedSearch, statusFilter, priorityFilter, sortBy, sortDir])
@@ -327,11 +329,11 @@ export default function TasksPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGINATION_LIMIT))
   const paginated  = filtered.slice((page - 1) * PAGINATION_LIMIT, page * PAGINATION_LIMIT)
 
-  const handleCreate        = async (form) => { setFormLoading(true);  try { await createTask(form);                  createModal.close()                      } catch {} finally { setFormLoading(false)  } }
+  const handleCreate        = async (form) => { setFormLoading(true);  try { await createTask(form);                  createModal.close()                      } catch { return } finally { setFormLoading(false)  } }
   const handleEdit          = (task) => { setSelectedTask(task); editModal.open() }
-  const handleUpdate        = async (form) => { setFormLoading(true);  try { await updateTask(selectedTask.id, form); editModal.close(); setSelectedTask(null)  } catch {} finally { setFormLoading(false)  } }
+  const handleUpdate        = async (form) => { setFormLoading(true);  try { await updateTask(selectedTask.id, form); editModal.close(); setSelectedTask(null)  } catch { return } finally { setFormLoading(false)  } }
   const handleDeleteClick   = (task) => { setSelectedTask(task); deleteDialog.open() }
-  const handleDeleteConfirm = async ()     => { setDeleteLoading(true); try { await deleteTask(selectedTask.id);        deleteDialog.close(); setSelectedTask(null) } catch {} finally { setDeleteLoading(false) } }
+  const handleDeleteConfirm = async ()     => { setDeleteLoading(true); try { await deleteTask(selectedTask.id);        deleteDialog.close(); setSelectedTask(null) } catch { return } finally { setDeleteLoading(false) } }
 
   const hasFilters = search || statusFilter || priorityFilter
   const clearAll   = () => { setSearch(''); setStatusFilter(''); setPriorityFilter(''); setPage(1) }

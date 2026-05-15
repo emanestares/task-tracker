@@ -36,7 +36,11 @@ export function useTasks(initialParams = {}) {
   }, [params])
 
   useEffect(() => {
-    fetchTasks()
+    const initialLoadId = setTimeout(() => {
+      void fetchTasks()
+    }, 0)
+
+    return () => clearTimeout(initialLoadId)
   }, [fetchTasks])
 
   const createTask = useCallback(async (payload) => {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useState, useEffect } from 'react'
 
 const ThemeContext = createContext(null)
 
@@ -29,8 +29,4 @@ export function ThemeProvider({ children }) {
   )
 }
 
-export function useTheme() {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error('useTheme must be used within ThemeProvider')
-  return ctx
-}
+export { ThemeContext }

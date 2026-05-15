@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
-import { TASK_STATUS, TASK_PRIORITY } from '../../constants'
-import { formatDate } from '../../utils'
+import { TASK_STATUS } from '../../constants'
 
 const PRIORITY_COLORS = {
   HIGH: { dot: '#ef4444', bg: '#fef2f2', text: '#ef4444', border: '#fecaca' },
@@ -153,7 +152,7 @@ export default function CalendarView({ tasks, onEdit, onDelete }) {
 
                     {/* Task dots / pills */}
                     <div className="space-y-0.5">
-                      {dayTasks.slice(0, 3).map((task, i) => {
+                      {dayTasks.slice(0, 3).map((task) => {
                         const pc = getPriorityColor(task)
                         return (
                           <div

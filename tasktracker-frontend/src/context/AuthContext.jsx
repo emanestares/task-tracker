@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import AuthService from '../services/authService'
@@ -7,30 +8,40 @@ import { isTokenExpired, decodeJwt } from '../utils'
 
 const AuthContext = createContext(null)
 
+function getInitialUser() {
+  try {
+    const storedToken = localStorage.getItem(TOKEN_KEY)
+    if (storedToken && isTokenExpired(storedToken)) {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+      return null
+    }
+
+    const stored = localStorage.getItem(USER_KEY)
+    return stored ? JSON.parse(stored) : null
+  } catch {
+    return null
+  }
+}
+
+function getInitialToken() {
+  const storedToken = localStorage.getItem(TOKEN_KEY)
+  if (storedToken && isTokenExpired(storedToken)) {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(USER_KEY)
+    return null
+  }
+
+  return storedToken
+}
+
 export function AuthProvider({ children }) {
   const navigate = useNavigate()
 
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem(USER_KEY)
-      return stored ? JSON.parse(stored) : null
-    } catch {
-      return null
-    }
-  })
-
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
+  const [user, setUser] = useState(() => getInitialUser())
+  const [token, setToken] = useState(() => getInitialToken())
   const [loading, setLoading] = useState(false)
-  const [initializing, setInitializing] = useState(true)
-
-  // Validate token on mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY)
-    if (storedToken && isTokenExpired(storedToken)) {
-      logout(false)
-    }
-    setInitializing(false)
-  }, [])
+  const [initializing] = useState(false)
 
   const saveSession = useCallback((token, user) => {
     localStorage.setItem(TOKEN_KEY, token)
