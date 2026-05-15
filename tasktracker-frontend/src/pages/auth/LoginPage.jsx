@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, ShieldOff } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { ROUTES } from '../../constants'
 import { Spinner } from '../../components/ui/index.jsx'
@@ -10,19 +10,37 @@ export default function LoginPage() {
   const [form, setForm] = useState({ username: '', password: '' })
   const [showPwd, setShowPwd] = useState(false)
   const [errors, setErrors] = useState({})
+  const [inactiveError, setInactiveError] = useState(false)
 
-  const set = (k, v) => { setForm((f) => ({ ...f, [k]: v })); setErrors((e) => ({ ...e, [k]: undefined })) }
+  const set = (k, v) => {
+    setForm((f) => ({ ...f, [k]: v }))
+    setErrors((e) => ({ ...e, [k]: undefined }))
+    setInactiveError(false)
+  }
+
   const validate = () => {
     const errs = {}
     if (!form.username.trim()) errs.username = 'Username is required.'
     if (!form.password) errs.password = 'Password is required.'
     return errs
   }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    try { await login(form) } catch { return }
+    try {
+      await login(form)
+    } catch (err) {
+      const msg = err.response?.data?.message || ''
+      if (
+        msg.toLowerCase().includes('inactive') ||
+        msg.toLowerCase().includes('disabled') ||
+        err.response?.status === 403
+      ) {
+        setInactiveError(true)
+      }
+    }
   }
 
   return (
@@ -37,7 +55,20 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidates>
+      {inactiveError && (
+        <div className="mb-5 flex items-start gap-3 rounded-xl px-4 py-3.5"
+          style={{ backgroundColor: '#fef3c7', border: '1px solid #fde68a' }}>
+          <ShieldOff size={16} style={{ color: '#d97706', flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <p className="text-sm font-semibold" style={{ color: '#92400e' }}>Account inactive</p>
+            <p className="text-xs mt-0.5" style={{ color: '#b45309' }}>
+              Your account has been deactivated. Please contact an administrator to restore access.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div>
           <label className="label">Username</label>
           <input

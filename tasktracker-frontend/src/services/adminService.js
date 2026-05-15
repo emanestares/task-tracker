@@ -74,6 +74,18 @@ const AdminService = {
     invalidateAdminCache('users', 'tasks', 'stats')
   },
 
+  async deactivateUser(id) {
+    const { data } = await apiClient.patch(`/api/admin/users/${id}/deactivate`)
+    invalidateAdminCache('users', 'stats')
+    return data
+  },
+
+  async activateUser(id) {
+    const { data } = await apiClient.patch(`/api/admin/users/${id}/activate`)
+    invalidateAdminCache('users', 'stats')
+    return data
+  },
+
   async getStats(options = {}) {
     return fetchWithCache('stats', async () => {
       const { data } = await apiClient.get('/api/admin/stats')

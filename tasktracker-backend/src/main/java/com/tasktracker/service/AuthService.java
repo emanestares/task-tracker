@@ -60,8 +60,13 @@ public class AuthService {
             new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        String token = jwtUtil.generateToken(auth.getName());
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
+
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            throw new DisabledException("Account is inactive. Please contact an administrator.");
+        }
+
+        String token = jwtUtil.generateToken(auth.getName());
 
         var userMap = Map.of(
             "username", user.getUsername(),

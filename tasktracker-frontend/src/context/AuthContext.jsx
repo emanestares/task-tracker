@@ -63,8 +63,14 @@ export function AuthProvider({ children }) {
       const role = userData.role || userData.roles?.[0]
       navigate(role === 'ADMIN' ? ROUTES.ADMIN : ROUTES.DASHBOARD)
     } catch (err) {
-      const msg = err.response?.data?.message || 'Invalid Username or Password. Please try again.'
-      toast.error(msg)
+      const msg = err.response?.data?.message || ''
+      const isInactive =
+        msg.toLowerCase().includes('inactive') ||
+        msg.toLowerCase().includes('disabled') ||
+        err.response?.status === 403
+      if (!isInactive) {
+        toast.error(msg || 'Invalid Username or Password. Please try again.')
+      }
       throw err
     } finally {
       setLoading(false)

@@ -1,20 +1,23 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Trash2, Users, ShieldCheck, User } from 'lucide-react'
+import { Trash2, Users, ShieldCheck, User, UserCheck, UserX, Loader2 } from 'lucide-react'
 import AdminService from '../../services/adminService'
 import PageHeader from '../../components/common/PageHeader'
 import SearchBar from '../../components/common/SearchBar'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import { EmptyState } from '../../components/ui/index.jsx'
 import { useDisclosure } from '../../hooks/index.js'
+import { useAuth } from '../../context/AuthContext'
 import { getInitials, formatDate } from '../../utils'
 import toast from 'react-hot-toast'
 
 export default function AdminUsersPage() {
+  const { user: currentUser } = useAuth()
   const [users, setUsers] = useState(() => AdminService.getCachedUsers() || [])
   const [loading, setLoading] = useState(() => !AdminService.getCachedUsers())
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [togglingId, setTogglingId] = useState(null)
   const deleteDialog = useDisclosure()
 
   const loadUsers = async (forceRefresh = false) => {
@@ -25,25 +28,14 @@ export default function AdminUsersPage() {
     } catch {
       toast.error('Failed to load users.')
     } finally {
-      if (!hasCachedUsers) {
-        setLoading(false)
-      }
+      if (!hasCachedUsers) setLoading(false)
     }
   }
 
   useEffect(() => {
-    const initialLoadId = setTimeout(() => {
-      void loadUsers()
-    }, 0)
-
-    const intervalId = setInterval(() => {
-      void loadUsers()
-    }, 15000)
-
-    return () => {
-      clearTimeout(initialLoadId)
-      clearInterval(intervalId)
-    }
+    const initialLoadId = setTimeout(() => { void loadUsers() }, 0)
+    const intervalId = setInterval(() => { void loadUsers() }, 15000)
+    return () => { clearTimeout(initialLoadId); clearInterval(intervalId) }
   }, [])
 
   const filtered = useMemo(() =>
@@ -71,6 +63,25 @@ export default function AdminUsersPage() {
       toast.error('Failed to delete user.')
     } finally {
       setDeleteLoading(false)
+    }
+  }
+
+  const handleToggleActive = async (user) => {
+    if (user.username === currentUser?.username) {
+      toast.error("You can't deactivate your own account.")
+      return
+    }
+    setTogglingId(user.id)
+    try {
+      const updated = user.isActive
+        ? await AdminService.deactivateUser(user.id)
+        : await AdminService.activateUser(user.id)
+      setUsers((prev) => prev.map((u) => u.id === updated.id ? { ...u, ...updated } : u))
+      toast.success(`${updated.name || updated.username} is now ${updated.isActive ? 'active' : 'inactive'}.`)
+    } catch {
+      toast.error('Failed to update user status.')
+    } finally {
+      setTogglingId(null)
     }
   }
 
@@ -103,7 +114,7 @@ export default function AdminUsersPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border-primary)', borderBottom: '1px solid var(--border-primary)' }}>
-                    {['User', 'Email', 'Role', 'Joined', 'Actions'].map((h) => (
+                    {['User', 'Email', 'Role', 'Status', 'Joined', 'Actions'].map((h) => (
                       <th key={h} className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
                         style={{ color: 'var(--text-secondary)' }}>{h}</th>
                     ))}
@@ -111,7 +122,7 @@ export default function AdminUsersPage() {
                 </thead>
                 <tbody>
                   {filtered.map((user) => (
-                    <tr key={user.id} className="table-row">
+                    <tr key={user.id} className="table-row" style={{ opacity: user.isActive === false ? 0.6 : 1 }}>
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -134,18 +145,30 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-3.5">
                         <RoleBadge role={user.role} />
                       </td>
+                      <td className="px-6 py-3.5">
+                        <StatusBadge isActive={user.isActive} />
+                      </td>
                       <td className="px-6 py-3.5 text-xs" style={{ color: 'var(--text-muted)' }}>
                         {formatDate(user.createdAt || user.created_at)}
                       </td>
                       <td className="px-6 py-3.5">
-                        <button
-                          onClick={() => handleDeleteClick(user)}
-                          className="p-1.5 rounded-lg transition-colors"
-                          style={{ color: '#dc2626', backgroundColor: '#fef2f2' }}
-                          title="Delete user"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <ActiveToggle
+                            isActive={user.isActive}
+                            loading={togglingId === user.id}
+                            disabled={user.username === currentUser?.username}
+                            onToggle={() => handleToggleActive(user)}
+                            title={user.username === currentUser?.username ? "You can't deactivate yourself" : user.isActive ? 'Deactivate user' : 'Activate user'}
+                          />
+                          <button
+                            onClick={() => handleDeleteClick(user)}
+                            className="p-1.5 rounded-lg transition-colors"
+                            style={{ color: '#dc2626', backgroundColor: '#fef2f2' }}
+                            title="Delete user"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -156,8 +179,8 @@ export default function AdminUsersPage() {
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
               {filtered.map((user) => (
-                <div key={user.id} className="flex items-center gap-3 py-3"
-                  style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                <div key={user.id} className="flex items-center gap-3 py-3 px-4"
+                  style={{ borderBottom: '1px solid var(--border-primary)', opacity: user.isActive === false ? 0.6 : 1 }}>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                     style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-primary)' }}>
                     {getInitials(user.name || user.username || 'U')}
@@ -171,6 +194,13 @@ export default function AdminUsersPage() {
                     </p>
                   </div>
                   <RoleBadge role={user.role} />
+                  <ActiveToggle
+                    isActive={user.isActive}
+                    loading={togglingId === user.id}
+                    disabled={user.username === currentUser?.username}
+                    onToggle={() => handleToggleActive(user)}
+                    title={user.username === currentUser?.username ? "You can't deactivate yourself" : user.isActive ? 'Deactivate' : 'Activate'}
+                  />
                   <button onClick={() => handleDeleteClick(user)}
                     className="p-1.5 rounded-lg flex-shrink-0"
                     style={{ color: '#dc2626', backgroundColor: '#fef2f2' }}>
@@ -206,5 +236,49 @@ function RoleBadge({ role }) {
       {isAdmin ? <ShieldCheck size={10} /> : <User size={10} />}
       {role || 'USER'}
     </span>
+  )
+}
+
+function StatusBadge({ isActive }) {
+  const active = isActive !== false
+  return (
+    <span className="badge text-xs" style={{
+      backgroundColor: active ? '#dcfce7' : '#fef3c7',
+      color: active ? '#15803d' : '#92400e',
+    }}>
+      <span style={{
+        width: 6, height: 6, borderRadius: '50%',
+        backgroundColor: active ? '#16a34a' : '#d97706',
+        display: 'inline-block', flexShrink: 0,
+      }} />
+      {active ? 'Active' : 'Inactive'}
+    </span>
+  )
+}
+
+function ActiveToggle({ isActive, loading, disabled, onToggle, title }) {
+  const active = isActive !== false
+  return (
+    <button
+      onClick={onToggle}
+      disabled={disabled || loading}
+      title={title}
+      className="p-1.5 rounded-lg transition-colors"
+      style={{
+        color: active ? '#16a34a' : '#d97706',
+        backgroundColor: active ? '#dcfce7' : '#fef3c7',
+        opacity: disabled ? 0.35 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        border: 'none',
+        flexShrink: 0,
+      }}
+    >
+      {loading
+        ? <Loader2 size={13} style={{ animation: 'spin 0.6s linear infinite' }} />
+        : active
+          ? <UserCheck size={13} />
+          : <UserX size={13} />
+      }
+    </button>
   )
 }

@@ -45,6 +45,18 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/users/{id}/deactivate")
+    public ResponseEntity<AdminUserResponse> deactivateUser(@PathVariable Long id, Authentication authentication) {
+        requireAdmin(authentication);
+        return ResponseEntity.ok(adminService.deactivateUser(id));
+    }
+
+    @PatchMapping("/users/{id}/activate")
+    public ResponseEntity<AdminUserResponse> activateUser(@PathVariable Long id, Authentication authentication) {
+        requireAdmin(authentication);
+        return ResponseEntity.ok(adminService.activateUser(id));
+    }
+
     private void requireAdmin(Authentication authentication) {
         if (authentication == null || authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)

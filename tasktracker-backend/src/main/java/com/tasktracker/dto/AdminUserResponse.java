@@ -14,5 +14,6 @@ public class AdminUserResponse {
     private String email;
     private String name;
     private User.Role role;
+    private Boolean isActive;
     private LocalDateTime createdAt;
 }
