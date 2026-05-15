@@ -61,18 +61,40 @@ public class AdminService {
 
     @Transactional
     public void deleteUser(Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new UserNotFoundException("Current user not found"));
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        if (user.getUsername().equals(currentUsername)) {
+            throw new IllegalArgumentException("You cannot delete your own account.");
+        }
+        if ((user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) 
+                && currentUser.getRole() != User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Only super admins can delete admins or super admins.");
+        }
+        if (user.getRole() == User.Role.SUPER_ADMIN && currentUser.getRole() == User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Super admins cannot delete other super admins.");
+        }
         userRepository.delete(user);
     }
 
     @Transactional
     public AdminUserResponse deactivateUser(Long id) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new UserNotFoundException("Current user not found"));
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         if (user.getUsername().equals(currentUsername)) {
             throw new IllegalArgumentException("Admins cannot deactivate their own account.");
+        }
+        if ((user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) 
+                && currentUser.getRole() != User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Only super admins can deactivate admins or super admins.");
+        }
+        if (user.getRole() == User.Role.SUPER_ADMIN && currentUser.getRole() == User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Super admins cannot deactivate other super admins.");
         }
         user.setIsActive(false);
         return mapUserToResponse(userRepository.save(user));
@@ -80,8 +102,18 @@ public class AdminService {
 
     @Transactional
     public AdminUserResponse activateUser(Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new UserNotFoundException("Current user not found"));
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        if ((user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) 
+                && currentUser.getRole() != User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Only super admins can activate admins or super admins.");
+        }
+        if (user.getRole() == User.Role.SUPER_ADMIN && currentUser.getRole() == User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Super admins cannot activate other super admins.");
+        }
         user.setIsActive(true);
         return mapUserToResponse(userRepository.save(user));
     }

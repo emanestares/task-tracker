@@ -267,6 +267,8 @@ export default function AdminUsersPage() {
                               title={
                                 user.username === currentUser?.username
                                   ? "You can't change your own role"
+                                  : user.role === 'SUPER_ADMIN'
+                                    ? 'Super admin role cannot be changed'
                                   : user.role === 'ADMIN'
                                     ? 'Demote to user'
                                     : 'Promote to admin'
@@ -276,11 +278,15 @@ export default function AdminUsersPage() {
                           <ActiveToggle
                             isActive={user.isActive}
                             loading={togglingId === user.id}
-                            disabled={user.username === currentUser?.username}
+                            disabled={user.username === currentUser?.username || (!isSuperAdmin && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')) || (isSuperAdmin && user.role === 'SUPER_ADMIN')}
                             onToggle={() => handleToggleActive(user)}
                             title={
                               user.username === currentUser?.username
                                 ? "You can't deactivate yourself"
+                                : isSuperAdmin && user.role === 'SUPER_ADMIN'
+                                  ? 'Super admins cannot deactivate other super admins'
+                                : !isSuperAdmin && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')
+                                  ? 'Only super admins can deactivate admins'
                                 : user.isActive
                                   ? 'Deactivate user'
                                   : 'Activate user'
@@ -289,24 +295,26 @@ export default function AdminUsersPage() {
                           {isSuperAdmin && (
                             <button
                               onClick={() => handleDeleteClick(user)}
-                              disabled={user.username === currentUser?.username}
+                              disabled={user.username === currentUser?.username || user.role === 'SUPER_ADMIN'}
                               className="p-1.5 rounded-lg transition-colors"
                               style={{
                                 color: '#dc2626',
                                 backgroundColor: '#fef2f2',
                                 opacity:
-                                  user.username === currentUser?.username
+                                  user.username === currentUser?.username || user.role === 'SUPER_ADMIN'
                                     ? 0.35
                                     : 1,
                                 cursor:
-                                  user.username === currentUser?.username
+                                  user.username === currentUser?.username || user.role === 'SUPER_ADMIN'
                                     ? 'not-allowed'
                                     : 'pointer',
                               }}
                               title={
                                 user.username === currentUser?.username
                                   ? "You can't delete yourself"
-                                  : 'Delete user'
+                                  : user.role === 'SUPER_ADMIN'
+                                    ? 'Super admins cannot delete other super admins'
+                                    : 'Delete user'
                               }
                             >
                               <Trash2 size={13} />
@@ -366,6 +374,8 @@ export default function AdminUsersPage() {
                       title={
                         user.username === currentUser?.username
                           ? "You can't change your own role"
+                          : user.role === 'SUPER_ADMIN'
+                            ? 'Super admin role cannot be changed'
                           : user.role === 'ADMIN'
                             ? 'Demote to user'
                             : 'Promote to admin'
@@ -375,35 +385,41 @@ export default function AdminUsersPage() {
                   <ActiveToggle
                     isActive={user.isActive}
                     loading={togglingId === user.id}
-                    disabled={user.username === currentUser?.username}
+                    disabled={user.username === currentUser?.username || (!isSuperAdmin && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')) || (isSuperAdmin && user.role === 'SUPER_ADMIN')}
                     onToggle={() => handleToggleActive(user)}
                     title={
                       user.username === currentUser?.username
                         ? "You can't deactivate yourself"
-                        : user.isActive
-                          ? 'Deactivate'
-                          : 'Activate'
+                        : isSuperAdmin && user.role === 'SUPER_ADMIN'
+                          ? 'Super admins cannot deactivate other super admins'
+                          : !isSuperAdmin && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')
+                            ? 'Only super admins can deactivate admins'
+                            : user.isActive
+                              ? 'Deactivate'
+                              : 'Activate'
                     }
                   />
                   {isSuperAdmin && (
                     <button
                       onClick={() => handleDeleteClick(user)}
-                      disabled={user.username === currentUser?.username}
+                      disabled={user.username === currentUser?.username || user.role === 'SUPER_ADMIN'}
                       className="p-1.5 rounded-lg flex-shrink-0"
                       style={{
                         color: '#dc2626',
                         backgroundColor: '#fef2f2',
                         opacity:
-                          user.username === currentUser?.username ? 0.35 : 1,
+                          user.username === currentUser?.username || user.role === 'SUPER_ADMIN' ? 0.35 : 1,
                         cursor:
-                          user.username === currentUser?.username
+                          user.username === currentUser?.username || user.role === 'SUPER_ADMIN'
                             ? 'not-allowed'
                             : 'pointer',
                       }}
                       title={
                         user.username === currentUser?.username
                           ? "You can't delete yourself"
-                          : 'Delete user'
+                          : user.role === 'SUPER_ADMIN'
+                            ? 'Super admins cannot delete other super admins'
+                            : 'Delete user'
                       }
                     >
                       <Trash2 size={13} />
