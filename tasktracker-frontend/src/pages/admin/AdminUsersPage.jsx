@@ -10,18 +10,40 @@ import { getInitials, formatDate } from '../../utils'
 import toast from 'react-hot-toast'
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [users, setUsers] = useState(() => AdminService.getCachedUsers() || [])
+  const [loading, setLoading] = useState(() => !AdminService.getCachedUsers())
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const deleteDialog = useDisclosure()
 
+  const loadUsers = async (forceRefresh = false) => {
+    const hasCachedUsers = !!AdminService.getCachedUsers()
+    try {
+      const data = await AdminService.getAllUsers({ forceRefresh })
+      setUsers(Array.isArray(data) ? data : [])
+    } catch {
+      toast.error('Failed to load users.')
+    } finally {
+      if (!hasCachedUsers) {
+        setLoading(false)
+      }
+    }
+  }
+
   useEffect(() => {
-    AdminService.getAllUsers()
-      .then((data) => setUsers(Array.isArray(data) ? data : []))
-      .catch(() => toast.error('Failed to load users.'))
-      .finally(() => setLoading(false))
+    const initialLoadId = setTimeout(() => {
+      void loadUsers()
+    }, 0)
+
+    const intervalId = setInterval(() => {
+      void loadUsers()
+    }, 15000)
+
+    return () => {
+      clearTimeout(initialLoadId)
+      clearInterval(intervalId)
+    }
   }, [])
 
   const filtered = useMemo(() =>

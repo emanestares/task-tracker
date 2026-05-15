@@ -9,17 +9,39 @@ import { formatDate, timeAgo, truncate } from '../../utils'
 import toast from 'react-hot-toast'
 
 export default function AdminTasksPage() {
-  const [tasks, setTasks] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [tasks, setTasks] = useState(() => AdminService.getCachedTasks() || [])
+  const [loading, setLoading] = useState(() => !AdminService.getCachedTasks())
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
 
+  const loadTasks = async (forceRefresh = false) => {
+    const hasCachedTasks = !!AdminService.getCachedTasks()
+    try {
+      const data = await AdminService.getAllTasks({ forceRefresh })
+      setTasks(Array.isArray(data) ? data : data?.content ?? [])
+    } catch {
+      toast.error('Failed to load tasks.')
+    } finally {
+      if (!hasCachedTasks) {
+        setLoading(false)
+      }
+    }
+  }
+
   useEffect(() => {
-    AdminService.getAllTasks()
-      .then((data) => setTasks(Array.isArray(data) ? data : data?.content ?? []))
-      .catch(() => toast.error('Failed to load tasks.'))
-      .finally(() => setLoading(false))
+    const initialLoadId = setTimeout(() => {
+      void loadTasks()
+    }, 0)
+
+    const intervalId = setInterval(() => {
+      void loadTasks()
+    }, 15000)
+
+    return () => {
+      clearTimeout(initialLoadId)
+      clearInterval(intervalId)
+    }
   }, [])
 
   const filtered = useMemo(() =>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Users, ListChecks, CheckCircle2, Clock, TrendingUp, Activity, Flame, ArrowRight, UserCheck, BarChart2 } from 'lucide-react'
+import { Users, ListChecks, CheckCircle2, Clock, Activity, Flame, ArrowRight, BarChart2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AdminService from '../../services/adminService'
 import PageHeader from '../../components/common/PageHeader'
@@ -15,16 +15,15 @@ function DonutChart({ segments, total, centerLabel, centerSub }) {
   const r    = (size - sw) / 2
   const circ = 2 * Math.PI * r
   const gapAngle = total > 0 ? gap / circ : 0
-  let offset = 0
-
-  const arcs = segments.map(seg => {
+  const arcs = segments.reduce((acc, seg) => {
     const pct  = total > 0 ? seg.value / total : 0
     const adjustedPct = Math.max(0, pct - gapAngle)
     const dash = adjustedPct * circ
-    const arc  = { ...seg, dashArray: `${dash} ${circ - dash}`, dashOffset: -offset * circ }
-    offset += pct
-    return arc
-  })
+    const previous = acc.offset
+    acc.arcs.push({ ...seg, dashArray: `${dash} ${circ - dash}`, dashOffset: -previous * circ })
+    acc.offset += pct
+    return acc
+  }, { arcs: [], offset: 0 }).arcs
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
@@ -173,41 +172,68 @@ function StatCard({ label, value, icon: Icon, loading, gradient, iconColor, bord
 
 /* ─── Main Page ──────────────────────────────────────────────── */
 export default function AdminDashboardPage() {
-  const [stats,       setStats]       = useState(null)
-  const [allTasks,    setAllTasks]    = useState([])
-  const [allUsers,    setAllUsers]    = useState([])
-  const [recentTasks, setRecentTasks] = useState([])
-  const [loading,     setLoading]     = useState(true)
+  const cachedUsers = AdminService.getCachedUsers() || []
+  const cachedTasks = AdminService.getCachedTasks() || []
 
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const [usersRaw, tasksRaw] = await Promise.all([
-          AdminService.getAllUsers(),
-          AdminService.getAllTasks(),
-        ])
-        const tasks = Array.isArray(tasksRaw) ? tasksRaw : tasksRaw?.content ?? []
-        const users = Array.isArray(usersRaw) ? usersRaw : []
+  const [stats,       setStats]       = useState(() => ({
+    totalUsers:      cachedUsers.length,
+    totalTasks:      cachedTasks.length,
+    doneTasks:       cachedTasks.filter(t => t.status === TASK_STATUS.DONE).length,
+    inProgressTasks: cachedTasks.filter(t => t.status === TASK_STATUS.IN_PROGRESS).length,
+    todoTasks:       cachedTasks.filter(t => t.status === TASK_STATUS.TODO).length,
+    cancelledTasks:  cachedTasks.filter(t => t.status === TASK_STATUS.CANCELLED).length,
+    highPriority:    cachedTasks.filter(t => t.priority === 'HIGH' && t.status !== TASK_STATUS.DONE).length,
+  }))
+  const [allTasks,    setAllTasks]    = useState(() => cachedTasks)
+  const [allUsers,    setAllUsers]    = useState(() => cachedUsers)
+  const [recentTasks, setRecentTasks] = useState(() => cachedTasks.slice(0, 8))
+  const [loading,     setLoading]     = useState(() => !(cachedUsers.length || cachedTasks.length))
 
-        setAllTasks(tasks)
-        setAllUsers(users)
-        setStats({
-          totalUsers:      users.length,
-          totalTasks:      tasks.length,
-          doneTasks:       tasks.filter(t => t.status === TASK_STATUS.DONE).length,
-          inProgressTasks: tasks.filter(t => t.status === TASK_STATUS.IN_PROGRESS).length,
-          todoTasks:       tasks.filter(t => t.status === TASK_STATUS.TODO).length,
-          cancelledTasks:  tasks.filter(t => t.status === TASK_STATUS.CANCELLED).length,
-          highPriority:    tasks.filter(t => t.priority === 'HIGH' && t.status !== TASK_STATUS.DONE).length,
-        })
-        setRecentTasks(tasks.slice(0, 8))
-      } catch {
-        setStats({ totalUsers:0, totalTasks:0, doneTasks:0, inProgressTasks:0, todoTasks:0, cancelledTasks:0, highPriority:0 })
-        setRecentTasks([])
-      } finally {
+  const loadDashboard = async (forceRefresh = false) => {
+    const hasCachedData = !!(AdminService.getCachedUsers() || AdminService.getCachedTasks())
+    try {
+      const [usersRaw, tasksRaw] = await Promise.all([
+        AdminService.getAllUsers({ forceRefresh }),
+        AdminService.getAllTasks({ forceRefresh }),
+      ])
+      const tasks = Array.isArray(tasksRaw) ? tasksRaw : tasksRaw?.content ?? []
+      const users = Array.isArray(usersRaw) ? usersRaw : []
+
+      setAllTasks(tasks)
+      setAllUsers(users)
+      setStats({
+        totalUsers:      users.length,
+        totalTasks:      tasks.length,
+        doneTasks:       tasks.filter(t => t.status === TASK_STATUS.DONE).length,
+        inProgressTasks: tasks.filter(t => t.status === TASK_STATUS.IN_PROGRESS).length,
+        todoTasks:       tasks.filter(t => t.status === TASK_STATUS.TODO).length,
+        cancelledTasks:  tasks.filter(t => t.status === TASK_STATUS.CANCELLED).length,
+        highPriority:    tasks.filter(t => t.priority === 'HIGH' && t.status !== TASK_STATUS.DONE).length,
+      })
+      setRecentTasks(tasks.slice(0, 8))
+    } catch {
+      setStats({ totalUsers:0, totalTasks:0, doneTasks:0, inProgressTasks:0, todoTasks:0, cancelledTasks:0, highPriority:0 })
+      setRecentTasks([])
+    } finally {
+      if (!hasCachedData) {
         setLoading(false)
       }
-    })()
+    }
+  }
+
+  useEffect(() => {
+    const initialLoadId = setTimeout(() => {
+      void loadDashboard()
+    }, 0)
+
+    const intervalId = setInterval(() => {
+      void loadDashboard()
+    }, 15000)
+
+    return () => {
+      clearTimeout(initialLoadId)
+      clearInterval(intervalId)
+    }
   }, [])
 
   /* Per-user task breakdown for bar chart */
