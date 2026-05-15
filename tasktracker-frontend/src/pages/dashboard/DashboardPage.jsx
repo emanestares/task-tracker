@@ -8,7 +8,7 @@ import { StatusBadge, EmptyState } from '../../components/ui/index.jsx'
 import { ROUTES, TASK_STATUS, TASK_PRIORITY } from '../../constants'
 import { formatDate, timeAgo } from '../../utils'
 
-function DonutChart({ done, inProgress, todo, total }) {
+function DonutChart({ done, inProgress, todo, cancelled, total }) {
   const size = 140
   const strokeWidth = 14
   const gap = 2
@@ -21,7 +21,7 @@ function DonutChart({ done, inProgress, todo, total }) {
     { value: done, color: '#10b981', label: 'Done', bg: '#ecfdf5', text: '#059669' },
     { value: inProgress, color: '#6366f1', label: 'In Progress', bg: '#eef2ff', text: '#4f46e5' },
     { value: todo, color: '#e4e41d', label: 'To Do', bg: '#f8fafc', text: '#64748b' },
-    
+    { value: cancelled, color: '#f43f5e', label: 'Cancelled', bg: '#fff1f2', text: '#e11d48' },
   ]
 
   let offset = 0
@@ -141,6 +141,7 @@ export default function DashboardPage() {
     todo: tasks.filter((t) => t.status === TASK_STATUS.TODO).length,
     inProgress: tasks.filter((t) => t.status === TASK_STATUS.IN_PROGRESS).length,
     done: tasks.filter((t) => t.status === TASK_STATUS.DONE).length,
+    cancelled: tasks.filter((t) => t.status === TASK_STATUS.CANCELLED).length,
   }), [tasks])
 
   const recent = useMemo(() => tasks.slice(0, 5), [tasks])
@@ -216,7 +217,7 @@ export default function DashboardPage() {
           ) : tasks.length === 0 ? (
             <p className="text-xs text-center py-8" style={{ color: 'var(--text-muted)' }}>No tasks yet</p>
           ) : (
-            <DonutChart done={stats.done} inProgress={stats.inProgress} todo={stats.todo} total={stats.total} />
+            <DonutChart done={stats.done} inProgress={stats.inProgress} todo={stats.todo} cancelled={stats.cancelled} total={stats.total} />
           )}
         </div>
 
