@@ -162,9 +162,14 @@ export default function AdminUsersPage() {
                           />
                           <button
                             onClick={() => handleDeleteClick(user)}
+                            disabled={user.username === currentUser?.username}
                             className="p-1.5 rounded-lg transition-colors"
-                            style={{ color: '#dc2626', backgroundColor: '#fef2f2' }}
-                            title="Delete user"
+                            style={{
+                              color: '#dc2626', backgroundColor: '#fef2f2',
+                              opacity: user.username === currentUser?.username ? 0.35 : 1,
+                              cursor: user.username === currentUser?.username ? 'not-allowed' : 'pointer',
+                            }}
+                            title={user.username === currentUser?.username ? "You can't delete yourself" : 'Delete user'}
                           >
                             <Trash2 size={13} />
                           </button>
@@ -202,8 +207,14 @@ export default function AdminUsersPage() {
                     title={user.username === currentUser?.username ? "You can't deactivate yourself" : user.isActive ? 'Deactivate' : 'Activate'}
                   />
                   <button onClick={() => handleDeleteClick(user)}
+                    disabled={user.username === currentUser?.username}
                     className="p-1.5 rounded-lg flex-shrink-0"
-                    style={{ color: '#dc2626', backgroundColor: '#fef2f2' }}>
+                    style={{
+                      color: '#dc2626', backgroundColor: '#fef2f2',
+                      opacity: user.username === currentUser?.username ? 0.35 : 1,
+                      cursor: user.username === currentUser?.username ? 'not-allowed' : 'pointer',
+                    }}
+                    title={user.username === currentUser?.username ? "You can't delete yourself" : 'Delete user'}>
                     <Trash2 size={13} />
                   </button>
                 </div>
