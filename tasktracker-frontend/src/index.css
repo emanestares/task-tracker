@@ -48,7 +48,7 @@
     --priority-low-border: #a7f3d0;
 
     /* Status colors */
-    --status-todo: #64748b;
+    --status-todo: #e9e918;
     --status-inprogress: #2563eb;
     --status-done: #10b981;
     --status-cancelled: #ef4444;
@@ -56,6 +56,10 @@
     --sidebar-width: 228px;
     --navbar-height: 56px;
     --radius: 10px;
+
+    /*To do colors*/
+    --bg-todo: #ffffe5;
+    --border-todo: #e4e487;
   }
 
   .dark {
@@ -95,10 +99,15 @@
     --priority-low-bg: #061a0e;
     --priority-low-border: #064e3b;
 
-    --status-todo: #94a3b8;
+    --status-todo: #c4c416;
     --status-inprogress: #60a5fa;
     --status-done: #34d399;
     --status-cancelled: #f87171;
+
+
+    /*To do colors*/
+    --bg-todo: #1b1b06;
+    --border-todo: #414107;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -224,9 +233,9 @@
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold;
   }
   .badge-todo {
-    background-color: var(--bg-tertiary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-primary);
+    background-color: var(--bg-todo);
+    color: #c4c416;
+    border: 1px solid var(--border-todo);
   }
   .badge-inprogress {
     background-color: var(--accent-light);

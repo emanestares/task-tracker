@@ -20,7 +20,8 @@ function DonutChart({ done, inProgress, todo, total }) {
   const segments = [
     { value: done, color: '#10b981', label: 'Done', bg: '#ecfdf5', text: '#059669' },
     { value: inProgress, color: '#6366f1', label: 'In Progress', bg: '#eef2ff', text: '#4f46e5' },
-    { value: todo, color: '#e2e8f0', label: 'To Do', bg: '#f8fafc', text: '#64748b' },
+    { value: todo, color: '#e4e41d', label: 'To Do', bg: '#f8fafc', text: '#64748b' },
+    
   ]
 
   let offset = 0
@@ -109,8 +110,8 @@ const STAT_CARDS = (stats) => [
     label: 'To Do',
     value: stats.todo,
     icon: Clock,
-    gradient: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-    iconColor: '#64748b',
+    gradient: 'linear-gradient(135deg, #f8fafc 0%, #fdfdd0 100%)',
+    iconColor: '#e4e41d',
     border: '#e2e8f0',
   },
   {

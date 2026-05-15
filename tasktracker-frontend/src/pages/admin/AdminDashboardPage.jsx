@@ -65,7 +65,7 @@ function DonutChart({ segments, total, centerLabel, centerSub }) {
         {segments.map(seg => {
           const pct = total > 0 ? (seg.value / total) * 100 : 0
           return (
-            <div key={seg.label} style={{ flex:1, height:4, borderRadius:999, background:'var(--border-primary)', overflow:'hidden' }}>
+            <div key={seg.label} style={{ flex:1, height:4, borderRadius:999, background:'var(--border-secondary)', overflow:'hidden' }}>
               <div style={{ height:'100%', width:`${pct}%`, backgroundColor:seg.color, borderRadius:999, transition:'width .9s cubic-bezier(.4,0,.2,1)' }} />
             </div>
           )
@@ -252,7 +252,7 @@ export default function AdminDashboardPage() {
 
   /* Task status bar data */
   const statusBarData = useMemo(() => [
-    { label: 'To Do',       value: stats?.todoTasks       ?? 0, color: '#94a3b8' },
+    { label: 'To Do',       value: stats?.todoTasks       ?? 0, color: '#e9e918' },
     { label: 'In Progress', value: stats?.inProgressTasks ?? 0, color: '#3b82f6' },
     { label: 'Done',        value: stats?.doneTasks       ?? 0, color: '#10b981' },
     { label: 'Cancelled',   value: stats?.cancelledTasks  ?? 0, color: '#f43f5e' },
@@ -265,7 +265,7 @@ export default function AdminDashboardPage() {
   const statusDonutSegs = [
     { label:'Done',        value: stats?.doneTasks       ?? 0, color:'#10b981' },
     { label:'In Progress', value: stats?.inProgressTasks ?? 0, color:'#3b82f6' },
-    { label:'To Do',       value: stats?.todoTasks       ?? 0, color:'#94a3b8' },
+    { label:'To Do',       value: stats?.todoTasks       ?? 0, color:'#e9e918' },
     { label:'Cancelled',   value: stats?.cancelledTasks  ?? 0, color:'#f43f5e' },
   ]
 
@@ -330,7 +330,7 @@ export default function AdminDashboardPage() {
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
             <h2 style={{ fontSize:15, fontWeight:700, color:'var(--text-primary)', margin:0 }}>Tasks by Status</h2>
             <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-              {[{l:'To Do',color:'#94a3b8'},{l:'In Progress',color:'#3b82f6'},{l:'Done',color:'#10b981'},{l:'Cancelled',color:'#f43f5e'}].map(({l,color}) => (
+              {[{l:'To Do',color:'#e9e918'},{l:'In Progress',color:'#3b82f6'},{l:'Done',color:'#10b981'},{l:'Cancelled',color:'#f43f5e'}].map(({l,color}) => (
                 <div key={l} style={{ display:'flex', alignItems:'center', gap:5 }}>
                   <span style={{ width:9, height:9, borderRadius:2, backgroundColor:color }} />
                   <span style={{ fontSize:11, color:'var(--text-secondary)', fontWeight:500 }}>{l}</span>
