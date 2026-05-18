@@ -25,6 +25,7 @@ public class Task {
 
     // Maps to bit(1) column — kept for backward compatibility
     @Column(nullable = false)
+    @Builder.Default
     private Boolean completed = false;
 
     @ManyToOne(fetch = FetchType.LAZY)

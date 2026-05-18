@@ -12,13 +12,12 @@ out/
 .gradle/
 **/build/
 
-!gradle/wrapper/gradle-wrapper.jar
-
 *.class
 *.jar
 *.war
 
 logs/
+!tasktracker-backend/gradle/wrapper/gradle-wrapper.jar
 
 # Spring Boot config / secrets
 **/application.properties
