@@ -60,6 +60,9 @@
     /*To do colors*/
     --bg-todo: #ffffe5;
     --border-todo: #e4e487;
+
+    /* Toast colors */
+    --toast-bg: #ffffff;
   }
 
   .dark {
@@ -107,6 +110,9 @@
     /*To do colors*/
     --bg-todo: #1b1b06;
     --border-todo: #414107;
+
+    /* Toast colors */
+    --toast-bg: #000000;
   }
 
   * {
