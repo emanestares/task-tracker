@@ -41,6 +41,6 @@ class UserTest {
                 .build();
 
         assertThat(user.getUsername()).isEqualTo("john");
-        assertThat(user.getRole()).isNull(); // important reality check
+        assertThat(user.getRole()).isEqualTo(User.Role.USER); // defaults to USER with @Builder.Default
     }
 }
