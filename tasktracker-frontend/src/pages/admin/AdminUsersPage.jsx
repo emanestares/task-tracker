@@ -1,14 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  Trash2,
-  Users,
-  ShieldCheck,
-  User,
-  UserCheck,
-  UserX,
-  BadgePlus,
-  BadgeMinus,
-  Loader2,
+  Users, ShieldCheck, User, UserCheck, UserX,
+  BadgePlus, BadgeMinus, Trash2, MoreHorizontal, Loader2,
 } from 'lucide-react';
 import AdminService from '../../services/adminService';
 import PageHeader from '../../components/common/PageHeader';
@@ -29,6 +22,7 @@ export default function AdminUsersPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
   const [roleUpdatingId, setRoleUpdatingId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const deleteDialog = useDisclosure();
 
   const loadUsers = async (forceRefresh = false) => {
@@ -44,32 +38,32 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
-    const initialLoadId = setTimeout(() => {
-      void loadUsers();
-    }, 0);
-    const intervalId = setInterval(() => {
-      void loadUsers();
-    }, 15000);
-    return () => {
-      clearTimeout(initialLoadId);
-      clearInterval(intervalId);
-    };
+    const initialLoadId = setTimeout(() => { void loadUsers(); }, 0);
+    const intervalId = setInterval(() => { void loadUsers(); }, 15000);
+    return () => { clearTimeout(initialLoadId); clearInterval(intervalId); };
   }, []);
 
-  const filtered = useMemo(
-    () =>
-      users.filter(
-        (u) =>
-          !search ||
-          u.name?.toLowerCase().includes(search.toLowerCase()) ||
-          u.username?.toLowerCase().includes(search.toLowerCase()) ||
-          u.email?.toLowerCase().includes(search.toLowerCase())
-      ),
-    [users, search]
-  );
+  // Close menu on outside click
+  useEffect(() => {
+    if (!openMenuId) return;
+    const close = (e) => {
+      if (!e.target.closest('[data-actions-menu]')) setOpenMenuId(null);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [openMenuId]);
+
+  const filtered = useMemo(() =>
+    users.filter((u) =>
+      !search ||
+      u.name?.toLowerCase().includes(search.toLowerCase()) ||
+      u.username?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase())
+    ), [users, search]);
 
   const handleDeleteClick = (user) => {
     setSelectedUser(user);
+    setOpenMenuId(null);
     deleteDialog.open();
   };
 
@@ -89,21 +83,14 @@ export default function AdminUsersPage() {
   };
 
   const handleToggleActive = async (user) => {
-    if (user.username === currentUser?.username) {
-      toast.error("You can't deactivate your own account.");
-      return;
-    }
+    setOpenMenuId(null);
     setTogglingId(user.id);
     try {
       const updated = user.isActive
         ? await AdminService.deactivateUser(user.id)
         : await AdminService.activateUser(user.id);
-      setUsers((prev) =>
-        prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u))
-      );
-      toast.success(
-        `${updated.name || updated.username} is now ${updated.isActive ? 'active' : 'inactive'}.`
-      );
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+      toast.success(`${updated.name || updated.username} is now ${updated.isActive ? 'active' : 'inactive'}.`);
     } catch {
       toast.error('Failed to update user status.');
     } finally {
@@ -112,21 +99,7 @@ export default function AdminUsersPage() {
   };
 
   const handleToggleRole = async (user) => {
-    if (!isSuperAdmin) {
-      toast.error('Only a super admin can change user roles.');
-      return;
-    }
-
-    if (user.username === currentUser?.username) {
-      toast.error("You can't change your own role.");
-      return;
-    }
-
-    if (user.role === 'SUPER_ADMIN') {
-      toast.error('Super admin role cannot be changed.');
-      return;
-    }
-
+    setOpenMenuId(null);
     setRoleUpdatingId(user.id);
     try {
       await AdminService.toggleUserRole(user.id);
@@ -138,6 +111,9 @@ export default function AdminUsersPage() {
       setRoleUpdatingId(null);
     }
   };
+
+  const isSelf = (user) => user.username === currentUser?.username;
+  const isSuperAdminUser = (user) => user.role === 'SUPER_ADMIN';
 
   return (
     <div>
@@ -164,11 +140,7 @@ export default function AdminUsersPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-6">
-            <EmptyState
-              icon={Users}
-              title="No users found"
-              description="No users match your search."
-            />
+            <EmptyState icon={Users} title="No users found" description="No users match your search." />
           </div>
         ) : (
           <>
@@ -176,257 +148,111 @@ export default function AdminUsersPage() {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr
-                    style={{
-                      backgroundColor: 'var(--bg-tertiary)',
-                      borderTop: '1px solid var(--border-primary)',
-                      borderBottom: '1px solid var(--border-primary)',
-                    }}
-                  >
-                    {[
-                      'User',
-                      'Email',
-                      'Role',
-                      'Status',
-                      'Joined',
-                      'Actions',
-                    ].map((h) => (
-                      <th
-                        key={h}
+                  <tr style={{
+                    backgroundColor: 'var(--bg-tertiary)',
+                    borderTop: '1px solid var(--border-primary)',
+                    borderBottom: '1px solid var(--border-primary)',
+                  }}>
+                    {['User', 'Email', 'Role', 'Status', 'Joined', ''].map((h, i) => (
+                      <th key={i}
                         className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
+                        style={{ color: 'var(--text-secondary)', width: h === '' ? 56 : undefined }}>
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="table-row"
-                      style={{ opacity: user.isActive === false ? 0.6 : 1 }}
-                    >
-                      <td className="px-6 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                            style={{
-                              backgroundColor: 'var(--accent-muted)',
-                              color: 'var(--accent-primary)',
-                            }}
-                          >
-                            {getInitials(user.name || user.username || 'U')}
+                  {filtered.map((user) => {
+                    const busy = togglingId === user.id || roleUpdatingId === user.id;
+                    return (
+                      <tr key={user.id} className="table-row"
+                        style={{ opacity: user.isActive === false ? 0.6 : 1 }}>
+                        <td className="px-6 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                              style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-primary)' }}>
+                              {getInitials(user.name || user.username || 'U')}
+                            </div>
+                            <div>
+                              <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                                {user.name || '—'}
+                              </p>
+                              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                                @{user.username}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p
-                              className="font-medium"
-                              style={{ color: 'var(--text-primary)' }}
-                            >
-                              {user.name || '—'}
-                            </p>
-                            <p
-                              className="text-xs"
-                              style={{ color: 'var(--text-muted)' }}
-                            >
-                              @{user.username}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td
-                        className="px-6 py-3.5 text-xs"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        {user.email || '—'}
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <RoleBadge role={user.role} />
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <StatusBadge isActive={user.isActive} />
-                      </td>
-                      <td
-                        className="px-6 py-3.5 text-xs"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
-                        {formatDate(user.createdAt || user.created_at)}
-                      </td>
-                      <td className="px-6 py-3.5">
-                        <div className="flex items-center gap-2">
-                          {isSuperAdmin && (
-                            <RoleToggle
-                              role={user.role}
-                              loading={roleUpdatingId === user.id}
-                              disabled={
-                                user.username === currentUser?.username ||
-                                user.role === 'SUPER_ADMIN'
-                              }
-                              onToggle={() => handleToggleRole(user)}
-                              title={
-                                user.username === currentUser?.username
-                                  ? "You can't change your own role"
-                                  : user.role === 'SUPER_ADMIN'
-                                    ? 'Super admin role cannot be changed'
-                                  : user.role === 'ADMIN'
-                                    ? 'Demote to user'
-                                    : 'Promote to admin'
-                              }
-                            />
-                          )}
-                          <ActiveToggle
-                            isActive={user.isActive}
-                            loading={togglingId === user.id}
-                            disabled={user.username === currentUser?.username || (!isSuperAdmin && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')) || (isSuperAdmin && user.role === 'SUPER_ADMIN')}
-                            onToggle={() => handleToggleActive(user)}
-                            title={
-                              user.username === currentUser?.username
-                                ? "You can't deactivate yourself"
-                                : isSuperAdmin && user.role === 'SUPER_ADMIN'
-                                  ? 'Super admins cannot deactivate other super admins'
-                                : !isSuperAdmin && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')
-                                  ? 'Only super admins can deactivate admins'
-                                : user.isActive
-                                  ? 'Deactivate user'
-                                  : 'Activate user'
-                            }
+                        </td>
+                        <td className="px-6 py-3.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                          {user.email || '—'}
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <RoleBadge role={user.role} />
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <StatusBadge isActive={user.isActive} />
+                        </td>
+                        <td className="px-6 py-3.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                          {formatDate(user.createdAt || user.created_at)}
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <ActionsMenu
+                            user={user}
+                            isSelf={isSelf(user)}
+                            isSuperAdmin={isSuperAdmin}
+                            isSuperAdminUser={isSuperAdminUser(user)}
+                            busy={busy}
+                            isOpen={openMenuId === user.id}
+                            onOpen={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
+                            onToggleActive={() => handleToggleActive(user)}
+                            onToggleRole={() => handleToggleRole(user)}
+                            onDelete={() => handleDeleteClick(user)}
                           />
-                          {isSuperAdmin && (
-                            <button
-                              onClick={() => handleDeleteClick(user)}
-                              disabled={user.username === currentUser?.username || user.role === 'SUPER_ADMIN'}
-                              className="p-1.5 rounded-lg transition-colors"
-                              style={{
-                                color: '#dc2626',
-                                backgroundColor: '#fef2f2',
-                                opacity:
-                                  user.username === currentUser?.username || user.role === 'SUPER_ADMIN'
-                                    ? 0.35
-                                    : 1,
-                                cursor:
-                                  user.username === currentUser?.username || user.role === 'SUPER_ADMIN'
-                                    ? 'not-allowed'
-                                    : 'pointer',
-                              }}
-                              title={
-                                user.username === currentUser?.username
-                                  ? "You can't delete yourself"
-                                  : user.role === 'SUPER_ADMIN'
-                                    ? 'Super admins cannot delete other super admins'
-                                    : 'Delete user'
-                              }
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile cards */}
-            <div className="md:hidden space-y-3">
-              {filtered.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center gap-3 py-3 px-4"
-                  style={{
-                    borderBottom: '1px solid var(--border-primary)',
-                    opacity: user.isActive === false ? 0.6 : 1,
-                  }}
-                >
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                    style={{
-                      backgroundColor: 'var(--accent-muted)',
-                      color: 'var(--accent-primary)',
-                    }}
-                  >
-                    {getInitials(user.name || user.username || 'U')}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="text-sm font-semibold truncate"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      {user.name || user.username}
-                    </p>
-                    <p
-                      className="text-xs truncate"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      {user.email}
-                    </p>
-                  </div>
-                  {isSuperAdmin && (
-                    <RoleToggle
-                      role={user.role}
-                      loading={roleUpdatingId === user.id}
-                      disabled={
-                        user.username === currentUser?.username ||
-                        user.role === 'SUPER_ADMIN'
-                      }
-                      onToggle={() => handleToggleRole(user)}
-                      title={
-                        user.username === currentUser?.username
-                          ? "You can't change your own role"
-                          : user.role === 'SUPER_ADMIN'
-                            ? 'Super admin role cannot be changed'
-                          : user.role === 'ADMIN'
-                            ? 'Demote to user'
-                            : 'Promote to admin'
-                      }
+            <div className="md:hidden">
+              {filtered.map((user) => {
+                const busy = togglingId === user.id || roleUpdatingId === user.id;
+                return (
+                  <div key={user.id} className="flex items-center gap-3 py-3 px-4"
+                    style={{ borderBottom: '1px solid var(--border-primary)', opacity: user.isActive === false ? 0.6 : 1 }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                      style={{ backgroundColor: 'var(--accent-muted)', color: 'var(--accent-primary)' }}>
+                      {getInitials(user.name || user.username || 'U')}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                        {user.name || user.username}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <RoleBadge role={user.role} />
+                        <StatusBadge isActive={user.isActive} />
+                      </div>
+                    </div>
+                    <ActionsMenu
+                      user={user}
+                      isSelf={isSelf(user)}
+                      isSuperAdmin={isSuperAdmin}
+                      isSuperAdminUser={isSuperAdminUser(user)}
+                      busy={busy}
+                      isOpen={openMenuId === user.id}
+                      onOpen={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
+                      onToggleActive={() => handleToggleActive(user)}
+                      onToggleRole={() => handleToggleRole(user)}
+                      onDelete={() => handleDeleteClick(user)}
+                      alignRight
                     />
-                  )}
-                  <ActiveToggle
-                    isActive={user.isActive}
-                    loading={togglingId === user.id}
-                    disabled={user.username === currentUser?.username || (!isSuperAdmin && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')) || (isSuperAdmin && user.role === 'SUPER_ADMIN')}
-                    onToggle={() => handleToggleActive(user)}
-                    title={
-                      user.username === currentUser?.username
-                        ? "You can't deactivate yourself"
-                        : isSuperAdmin && user.role === 'SUPER_ADMIN'
-                          ? 'Super admins cannot deactivate other super admins'
-                          : !isSuperAdmin && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')
-                            ? 'Only super admins can deactivate admins'
-                            : user.isActive
-                              ? 'Deactivate'
-                              : 'Activate'
-                    }
-                  />
-                  {isSuperAdmin && (
-                    <button
-                      onClick={() => handleDeleteClick(user)}
-                      disabled={user.username === currentUser?.username || user.role === 'SUPER_ADMIN'}
-                      className="p-1.5 rounded-lg flex-shrink-0"
-                      style={{
-                        color: '#dc2626',
-                        backgroundColor: '#fef2f2',
-                        opacity:
-                          user.username === currentUser?.username || user.role === 'SUPER_ADMIN' ? 0.35 : 1,
-                        cursor:
-                          user.username === currentUser?.username || user.role === 'SUPER_ADMIN'
-                            ? 'not-allowed'
-                            : 'pointer',
-                      }}
-                      title={
-                        user.username === currentUser?.username
-                          ? "You can't delete yourself"
-                          : user.role === 'SUPER_ADMIN'
-                            ? 'Super admins cannot delete other super admins'
-                            : 'Delete user'
-                      }
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
@@ -445,121 +271,156 @@ export default function AdminUsersPage() {
   );
 }
 
+// ── ActionsMenu ───────────────────────────────────────────────────────────────
+
+function ActionsMenu({
+  user, isSelf, isSuperAdmin, isSuperAdminUser,
+  busy, isOpen, onOpen,
+  onToggleActive, onToggleRole, onDelete,
+  alignRight = false,
+}) {
+  const ref = useRef(null);
+  const active = user.isActive !== false;
+  const canToggleActive = !isSelf && !isSuperAdminUser && (isSuperAdmin || user.role === 'USER');
+  const canToggleRole = isSuperAdmin && !isSelf && !isSuperAdminUser;
+  const canDelete = isSuperAdmin && !isSelf && !isSuperAdminUser;
+
+  const items = [
+    canToggleActive && {
+      label: active ? 'Deactivate user' : 'Activate user',
+      icon: active ? UserX : UserCheck,
+      color: active ? '#d97706' : '#16a34a',
+      bg: active ? '#fef3c7' : '#dcfce7',
+      onClick: onToggleActive,
+    },
+    canToggleRole && {
+      label: user.role === 'ADMIN' ? 'Demote to User' : 'Promote to Admin',
+      icon: user.role === 'ADMIN' ? BadgeMinus : BadgePlus,
+      color: user.role === 'ADMIN' ? '#b45309' : '#2563eb',
+      bg: user.role === 'ADMIN' ? '#fef3c7' : '#dbeafe',
+      onClick: onToggleRole,
+    },
+    canDelete && { divider: true },
+    canDelete && {
+      label: 'Delete user',
+      icon: Trash2,
+      color: '#dc2626',
+      bg: '#fef2f2',
+      onClick: onDelete,
+      danger: true,
+    },
+  ].filter(Boolean);
+
+  const hasActions = items.some((i) => !i.divider);
+
+  return (
+    <div ref={ref} data-actions-menu style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        onClick={onOpen}
+        disabled={busy || !hasActions}
+        title={!hasActions ? 'No actions available' : 'Actions'}
+        style={{
+          width: 28, height: 28,
+          borderRadius: 8,
+          border: '1px solid var(--border-primary)',
+          backgroundColor: isOpen ? 'var(--bg-tertiary)' : 'transparent',
+          color: 'var(--text-secondary)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: (!hasActions || busy) ? 'not-allowed' : 'pointer',
+          opacity: (!hasActions || busy) ? 0.4 : 1,
+          transition: 'background-color 0.15s',
+          flexShrink: 0,
+        }}
+      >
+        {busy
+          ? <Loader2 size={13} style={{ animation: 'spin 0.6s linear infinite' }} />
+          : <MoreHorizontal size={14} />
+        }
+      </button>
+
+      {isOpen && hasActions && (
+        <div data-actions-menu style={{
+          position: 'absolute',
+          top: 'calc(100% + 4px)',
+          right: alignRight ? 0 : undefined,
+          left: alignRight ? undefined : 0,
+          zIndex: 50,
+          minWidth: 180,
+          borderRadius: 10,
+          border: '1px solid var(--border-primary)',
+          backgroundColor: 'var(--bg-primary)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+          overflow: 'hidden',
+          padding: '4px 0',
+        }}>
+          {items.map((item, i) =>
+            item.divider ? (
+              <div key={i} style={{ height: 1, backgroundColor: 'var(--border-primary)', margin: '4px 0' }} />
+            ) : (
+              <button
+                key={i}
+                onClick={item.onClick}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  width: '100%', padding: '8px 14px',
+                  background: 'none', border: 'none',
+                  color: item.danger ? item.color : 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  textAlign: 'left',
+                  transition: 'background-color 0.1s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = item.bg}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <span style={{
+                  width: 24, height: 24, borderRadius: 6,
+                  backgroundColor: item.bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <item.icon size={12} style={{ color: item.color }} />
+                </span>
+                {item.label}
+              </button>
+            )
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Badges ────────────────────────────────────────────────────────────────────
+
 function RoleBadge({ role }) {
   const isSuperAdmin = role === 'SUPER_ADMIN';
   const isAdmin = role === 'ADMIN';
   const label = isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : 'User';
   return (
-    <span
-      className="badge text-xs"
-      style={{
-        backgroundColor: isSuperAdmin
-          ? '#fef3c7'
-          : isAdmin
-            ? 'var(--accent-muted)'
-            : 'var(--bg-tertiary)',
-        color: isSuperAdmin
-          ? '#92400e'
-          : isAdmin
-            ? 'var(--accent-primary)'
-            : 'var(--text-secondary)',
-      }}
-    >
-      {isSuperAdmin ? (
-        <ShieldCheck size={10} />
-      ) : isAdmin ? (
-        <ShieldCheck size={10} />
-      ) : (
-        <User size={10} />
-      )}
+    <span className="badge text-xs" style={{
+      backgroundColor: isSuperAdmin ? '#fef3c7' : isAdmin ? 'var(--accent-muted)' : 'var(--bg-tertiary)',
+      color: isSuperAdmin ? '#92400e' : isAdmin ? 'var(--accent-primary)' : 'var(--text-secondary)',
+    }}>
+      {isSuperAdmin || isAdmin ? <ShieldCheck size={10} /> : <User size={10} />}
       {label}
     </span>
-  );
-}
-
-function RoleToggle({ role, loading, disabled, onToggle, title }) {
-  const isSuperAdmin = role === 'SUPER_ADMIN';
-  const isAdmin = role === 'ADMIN';
-
-  return (
-    <button
-      onClick={onToggle}
-      disabled={isSuperAdmin || disabled || loading}
-      title={title}
-      className="p-1.5 rounded-lg transition-colors"
-      style={{
-        color: isSuperAdmin ? '#a16207' : isAdmin ? '#b45309' : '#2563eb',
-        backgroundColor: isSuperAdmin
-          ? '#fef9c3'
-          : isAdmin
-            ? '#fef3c7'
-            : '#dbeafe',
-        opacity: disabled || loading ? 0.35 : 1,
-        cursor: disabled || loading ? 'not-allowed' : 'pointer',
-        border: 'none',
-        flexShrink: 0,
-      }}
-    >
-      {loading ? (
-        <Loader2 size={13} style={{ animation: 'spin 0.6s linear infinite' }} />
-      ) : role === 'ADMIN' || role === 'SUPER_ADMIN' ? (
-        <BadgeMinus size={13} />
-      ) : (
-        <BadgePlus size={13} />
-      )}
-    </button>
   );
 }
 
 function StatusBadge({ isActive }) {
   const active = isActive !== false;
   return (
-    <span
-      className="badge text-xs"
-      style={{
-        backgroundColor: active ? '#dcfce7' : '#fef3c7',
-        color: active ? '#15803d' : '#92400e',
-      }}
-    >
-      <span
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          backgroundColor: active ? '#16a34a' : '#d97706',
-          display: 'inline-block',
-          flexShrink: 0,
-        }}
-      />
+    <span className="badge text-xs" style={{
+      backgroundColor: active ? '#dcfce7' : '#fef3c7',
+      color: active ? '#15803d' : '#92400e',
+    }}>
+      <span style={{
+        width: 6, height: 6, borderRadius: '50%',
+        backgroundColor: active ? '#16a34a' : '#d97706',
+        display: 'inline-block', flexShrink: 0,
+      }} />
       {active ? 'Active' : 'Inactive'}
     </span>
-  );
-}
-
-function ActiveToggle({ isActive, loading, disabled, onToggle, title }) {
-  const active = isActive !== false;
-  return (
-    <button
-      onClick={onToggle}
-      disabled={disabled || loading}
-      title={title}
-      className="p-1.5 rounded-lg transition-colors"
-      style={{
-        color: active ? '#16a34a' : '#d97706',
-        backgroundColor: active ? '#dcfce7' : '#fef3c7',
-        opacity: disabled ? 0.35 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        border: 'none',
-        flexShrink: 0,
-      }}
-    >
-      {loading ? (
-        <Loader2 size={13} style={{ animation: 'spin 0.6s linear infinite' }} />
-      ) : active ? (
-        <UserCheck size={13} />
-      ) : (
-        <UserX size={13} />
-      )}
-    </button>
   );
 }

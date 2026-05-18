@@ -206,12 +206,13 @@ function DonutChart({ segments, total, centerLabel, centerSub }) {
 function BarChart({ data, maxVal, colors }) {
   const ref = useRef(null);
 
-  useEffect(() => {
+  const draw = () => {
     const canvas = ref.current;
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.clientWidth;
     const H = canvas.clientHeight;
+    if (!W || !H) return;
     canvas.width = W * dpr;
     canvas.height = H * dpr;
     const ctx = canvas.getContext('2d');
@@ -285,6 +286,13 @@ function BarChart({ data, maxVal, colors }) {
         ctx.fillText(d.label, x + barW / 2, padT + chartH + 8);
       }
     });
+  };
+
+  useEffect(() => {
+    draw();
+    const ro = new ResizeObserver(() => draw());
+    if (ref.current) ro.observe(ref.current);
+    return () => ro.disconnect();
   }, [data, maxVal, colors]);
 
   return (
@@ -577,9 +585,9 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ── Row: Status donut + Task status bar chart ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: 20, minHeight: 340 }}>
         {/* Donut */}
-        <div className="card" style={{ padding: 24 }}>
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
           <div
             style={{
               display: 'flex',
@@ -654,13 +662,14 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Status bar chart */}
-        <div className="card" style={{ padding: 24 }}>
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: 8,
+              flexShrink: 0,
             }}
           >
             <h2
@@ -708,10 +717,10 @@ export default function AdminDashboardPage() {
           {loading ? (
             <div
               className="skeleton"
-              style={{ height: 180, borderRadius: 12 }}
+              style={{ flex: 1, minHeight: 180, borderRadius: 12 }}
             />
           ) : (
-            <div style={{ height: 200 }}>
+            <div style={{ flex: 1, minHeight: 0 }}>
               <BarChart
                 data={statusBarData}
                 colors={statusBarData.map((d) => d.color)}
@@ -722,15 +731,16 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ── Row: Per-user chart + High priority tasks ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 20, minHeight: 380 }}>
         {/* Per-user task bar */}
-        <div className="card" style={{ padding: 24 }}>
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: 8,
+              flexShrink: 0,
             }}
           >
             <div>
@@ -768,12 +778,13 @@ export default function AdminDashboardPage() {
           {loading ? (
             <div
               className="skeleton"
-              style={{ height: 180, borderRadius: 12 }}
+              style={{ flex: 1, minHeight: 180, borderRadius: 12 }}
             />
           ) : userTaskData.length === 0 ? (
             <div
               style={{
-                height: 180,
+                flex: 1,
+                minHeight: 180,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -784,7 +795,7 @@ export default function AdminDashboardPage() {
               </p>
             </div>
           ) : (
-            <div style={{ height: 200 }}>
+            <div style={{ flex: 1, minHeight: 0 }}>
               <BarChart
                 data={userTaskData}
                 colors={[
@@ -803,7 +814,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* High priority alert */}
-        <div className="card" style={{ padding: 24 }}>
+        <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
           <div
             style={{
               display: 'flex',
@@ -876,7 +887,8 @@ export default function AdminDashboardPage() {
                 .filter(
                   (t) => t.priority === 'HIGH' && t.status !== TASK_STATUS.DONE
                 )
-                .slice(0, 4)
+                .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at))
+                .slice(0, 3)
                 .map((task) => (
                   <div
                     key={task.id}
