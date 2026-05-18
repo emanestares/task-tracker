@@ -23,15 +23,23 @@ public class User {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
+    @Column(name = "full_name", length = 100)
+    private String fullName;
+
     @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Role role = Role.USER;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Task> tasks;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -49,5 +57,5 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
-    public enum Role { USER, ADMIN }
+    public enum Role { USER, ADMIN, SUPER_ADMIN }
 }

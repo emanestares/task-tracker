@@ -3,6 +3,8 @@ package com.tasktracker.dto;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 public class TaskRequest {
 
@@ -14,4 +16,17 @@ public class TaskRequest {
     private String description;
 
     private Boolean completed = false;
+
+    // Optional — must not be before today
+    @NotNull(message = "Due date is required")
+    @FutureOrPresent(message = "Due date cannot be before today")
+    private LocalDate dueDate;
+
+    // Optional — e.g. "LOW", "MEDIUM", "HIGH"
+    @Size(max = 50, message = "Priority cannot exceed 50 characters")
+    private String priority;
+
+    // Optional — e.g. "TODO", "IN_PROGRESS", "DONE", "CANCELLED"
+    @Size(max = 50, message = "Status cannot exceed 50 characters")
+    private String status;
 }

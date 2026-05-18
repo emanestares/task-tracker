@@ -1,0 +1,172 @@
+package com.tasktracker.service;
+
+import com.tasktracker.dto.AdminStatsResponse;
+import com.tasktracker.dto.AdminTaskResponse;
+import com.tasktracker.dto.AdminUserResponse;
+import com.tasktracker.entity.Task;
+import com.tasktracker.entity.User;
+import com.tasktracker.exception.UserNotFoundException;
+import com.tasktracker.repository.TaskRepository;
+import com.tasktracker.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class AdminService {
+
+    private final UserRepository userRepository;
+    private final TaskRepository taskRepository;
+
+    @Transactional(readOnly = true)
+    public List<AdminUserResponse> getAllUsers() {
+        return userRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .map(this::mapUserToResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminTaskResponse> getAllTasks() {
+        return taskRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .map(this::mapTaskToResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public AdminStatsResponse getStats() {
+        List<Task> tasks = taskRepository.findAll();
+
+        long doneTasks = tasks.stream()
+                .filter(task -> isStatus(task.getStatus(), "DONE") || Boolean.TRUE.equals(task.getCompleted()))
+                .count();
+
+        long inProgressTasks = tasks.stream()
+                .filter(task -> isStatus(task.getStatus(), "IN_PROGRESS"))
+                .count();
+
+        return AdminStatsResponse.builder()
+                .totalUsers(userRepository.count())
+                .totalTasks(taskRepository.count())
+                .doneTasks(doneTasks)
+                .inProgressTasks(inProgressTasks)
+                .build();
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new UserNotFoundException("Current user not found"));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        if (user.getUsername().equals(currentUsername)) {
+            throw new IllegalArgumentException("You cannot delete your own account.");
+        }
+        if ((user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) 
+                && currentUser.getRole() != User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Only super admins can delete admins or super admins.");
+        }
+        if (user.getRole() == User.Role.SUPER_ADMIN && currentUser.getRole() == User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Super admins cannot delete other super admins.");
+        }
+        userRepository.delete(user);
+    }
+
+    @Transactional
+    public AdminUserResponse deactivateUser(Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new UserNotFoundException("Current user not found"));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        if (user.getUsername().equals(currentUsername)) {
+            throw new IllegalArgumentException("Admins cannot deactivate their own account.");
+        }
+        if ((user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) 
+                && currentUser.getRole() != User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Only super admins can deactivate admins or super admins.");
+        }
+        if (user.getRole() == User.Role.SUPER_ADMIN && currentUser.getRole() == User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Super admins cannot deactivate other super admins.");
+        }
+        user.setIsActive(false);
+        return mapUserToResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public AdminUserResponse activateUser(Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new UserNotFoundException("Current user not found"));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+        if ((user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) 
+                && currentUser.getRole() != User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Only super admins can activate admins or super admins.");
+        }
+        if (user.getRole() == User.Role.SUPER_ADMIN && currentUser.getRole() == User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Super admins cannot activate other super admins.");
+        }
+        user.setIsActive(true);
+        return mapUserToResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public AdminUserResponse toggleUserRole(Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+
+        if (user.getUsername().equals(currentUsername)) {
+            throw new IllegalArgumentException("You cannot change your own role.");
+        }
+
+        if (user.getRole() == User.Role.SUPER_ADMIN) {
+            throw new IllegalArgumentException("Super admin role cannot be changed.");
+        }
+
+        user.setRole(user.getRole() == User.Role.ADMIN ? User.Role.USER : User.Role.ADMIN);
+        return mapUserToResponse(userRepository.save(user));
+    }
+
+    private AdminUserResponse mapUserToResponse(User user) {
+        return AdminUserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .name(user.getFullName() != null && !user.getFullName().isBlank()
+                        ? user.getFullName()
+                        : user.getUsername())
+                .role(user.getRole())
+                .isActive(user.getIsActive())
+                .createdAt(user.getCreatedAt())
+                .build();
+    }
+
+    private AdminTaskResponse mapTaskToResponse(Task task) {
+        return AdminTaskResponse.builder()
+                .id(task.getId())
+                .title(task.getTitle())
+                .description(task.getDescription())
+                .completed(task.getCompleted())
+                .userId(task.getUser() != null ? task.getUser().getId() : null)
+                .user(task.getUser() != null ? mapUserToResponse(task.getUser()) : null)
+                .createdAt(task.getCreatedAt())
+                .updatedAt(task.getUpdatedAt())
+                .dueDate(task.getDueDate())
+                .priority(task.getPriority())
+                .status(task.getStatus())
+                .build();
+    }
+
+    private boolean isStatus(String actual, String expected) {
+        return actual != null && actual.equalsIgnoreCase(expected);
+    }
+}
